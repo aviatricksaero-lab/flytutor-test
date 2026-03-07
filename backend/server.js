@@ -13,6 +13,7 @@ import User from './models/User.js';
 import Assessment from './models/Assessment.js';
 import Submission from './models/Submission.js';
 import { extractQuestions } from './utils/extractQuestions.js';
+import { extractAnswerKey } from './utils/extractAnswerKey.js';
 
 dotenv.config();
 connectDB();
@@ -73,13 +74,27 @@ const adminAuth = (req, res, next) => {
 
 // --- AUTH ROUTES ---
 
+// --- AUTH ROUTES ---
+
+// In production, we assume Firebase client-side verified the phone number
+// and we trust it, or verify the ID token here.
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ message: 'User already exists' });
+    const { name, email, password, role, phone, desiredMark } = req.body;
 
-    const user = new User({ name, email, password, role });
+    // Check if email exists
+    const normalizedEmail = email.toLowerCase().trim();
+    const exists = await User.findOne({ email: normalizedEmail });
+    if (exists) return res.status(400).json({ message: 'Email already registered' });
+
+    // Check if Phone exists
+    if (phone) {
+      const normalizedPhone = phone.trim();
+      const phoneExists = await User.findOne({ phone: normalizedPhone });
+      if (phoneExists) return res.status(400).json({ message: 'Phone number already registered' });
+    }
+
+    const user = new User({ name, email: normalizedEmail, password, role, phone: phone?.trim(), desiredMark });
     await user.save();
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
     res.status(201).json({ user, token });
@@ -162,49 +177,60 @@ app.post('/api/assessments/submit', auth, async (req, res) => {
 
 // --- ADMIN / TRAINER ROUTES ---
 
-app.post('/api/admin/tests/create', auth, adminAuth, upload.single('pdfFile'), async (req, res) => {
+app.post('/api/admin/tests/create', auth, adminAuth, upload.fields([
+  { name: 'pdfFile', maxCount: 1 },
+  { name: 'answerKey', maxCount: 1 }
+]), async (req, res) => {
   try {
     const { title, duration } = req.body;
+    const files = req.files;
 
     if (!title) return res.status(400).json({ error: 'Title is required.' });
-    if (!req.file) return res.status(400).json({ error: 'PDF file is required.' });
+    if (!files.pdfFile) return res.status(400).json({ error: 'Question PDF file is required.' });
 
-    const pdfBuffer = req.file.buffer;
+    const pdfBuffer = files.pdfFile[0].buffer;
 
-    // 1. Extract text from PDF using pdf-parse v2 API
-    console.log(`📖 Parsing PDF: ${req.file.originalname} (${req.file.size} bytes)`);
-    const parser = new PDFParse({
-      data: new Uint8Array(pdfBuffer),
-      verbosity: 0
-    });
+    // 1. Extract text from Question PDF
+    console.log(`📖 Parsing PDF: ${files.pdfFile[0].originalname}`);
+    const parser = new PDFParse({ data: new Uint8Array(pdfBuffer), verbosity: 0 });
     const textResult = await parser.getText();
     const rawText = textResult.text;
     await parser.destroy();
-    console.log(`📝 Extracted ${rawText.length} chars from PDF`);
 
     // 2. Extract questions from text
-    const questions = extractQuestions(rawText);
+    let questions = extractQuestions(rawText);
     console.log(`✅ Found ${questions.length} questions in PDF`);
 
     if (questions.length === 0) {
-      return res.status(400).json({
-        error: 'Could not extract any questions from the PDF. Please ensure your PDF uses a supported MCQ format (e.g. "1. Question\\nA) Option\\nB) Option\\nAnswer: A").'
-      });
+      return res.status(400).json({ error: 'Could not extract questions from PDF.' });
     }
 
-    // 3. Upload PDF to Firebase Storage
+    // 3. Process Answer Key if provided
+    if (files.answerKey) {
+      console.log(`📖 Parsing Answer Key: ${files.answerKey[0].originalname}`);
+      const keyParser = new PDFParse({ data: new Uint8Array(files.answerKey[0].buffer), verbosity: 0 });
+      const keyText = (await keyParser.getText()).text;
+      await keyParser.destroy();
+
+      const answers = extractAnswerKey(keyText);
+      console.log(`🎯 Extracted ${answers.length} answers from key`);
+
+      // Apply key to questions (match by index)
+      questions = questions.map((q, idx) => ({
+        ...q,
+        correctAnswer: answers[idx] !== undefined ? answers[idx] : q.correctAnswer
+      }));
+    }
+
+    // 4. Upload PDF to Firebase Storage
     if (!bucket) return res.status(500).json({ error: 'Firebase Storage not configured.' });
-
-    const fileName = `assessments/${Date.now()}-${req.file.originalname}`;
+    const fileName = `assessments/${Date.now()}-${files.pdfFile[0].originalname}`;
     const fileRef = bucket.file(fileName);
-
-    console.log(`📤 Uploading PDF to Firebase: ${fileName}`);
     await fileRef.save(pdfBuffer, { metadata: { contentType: 'application/pdf' } });
     await fileRef.makePublic();
     const pdfUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
-    console.log(`✅ PDF uploaded: ${pdfUrl}`);
 
-    // 4. Save assessment
+    // 5. Save assessment
     const assessment = new Assessment({
       title,
       duration: parseInt(duration) || 30,
@@ -252,6 +278,53 @@ app.get('/api/admin/submissions', auth, adminAuth, async (req, res) => {
     });
 
     res.json(detailed);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/admin/tests', auth, adminAuth, async (req, res) => {
+  try {
+    const tests = await Assessment.find().sort({ createdAt: -1 });
+    res.json(tests);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.delete('/api/admin/tests/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const test = await Assessment.findById(req.params.id);
+    if (!test) return res.status(404).json({ error: 'Test not found' });
+
+    // Try deleting PDF from Firebase
+    if (bucket && test.pdfUrl) {
+      try {
+        const fileName = test.pdfUrl.split('/').pop();
+        const fileRef = bucket.file(`assessments/${fileName}`);
+        await fileRef.delete().catch(() => { });
+      } catch (err) { console.error('Firebase delete err:', err); }
+    }
+
+    // Delete related submissions
+    await Submission.deleteMany({ assessment: req.params.id });
+    await Assessment.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Test and associated submissions deleted.' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.delete('/api/admin/users/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const userToDel = await User.findById(req.params.id);
+    if (!userToDel) return res.status(404).json({ error: 'User not found' });
+    if (userToDel.role === 'ADMIN') return res.status(400).json({ error: 'Cannot delete admins.' });
+
+    // Delete related submissions
+    await Submission.deleteMany({ student: req.params.id });
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ message: 'User deleted.' });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

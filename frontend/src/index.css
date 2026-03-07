@@ -3,14 +3,61 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #0c0e14;
+  color-scheme: light;
+  color: #1f2937;
+  background-color: #f8fafc;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.scholarship-hero {
+  font-family: 'Cinzel', serif;
+  font-size: 3.5rem;
+  font-weight: 800;
+  text-align: center;
+  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 24px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  animation: fadeInDown 1s ease-out;
+  z-index: 2;
+  position: relative;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .scholarship-hero {
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .scholarship-hero {
+    font-size: 1.4rem;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
 }
 
 body {
@@ -19,7 +66,141 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
-  background: radial-gradient(circle at top right, #1a1c2e, #0c0e14);
+  background: radial-gradient(circle at top right, #ffffff, #fdf2f8);
+}
+
+.auth-page-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image: url('./assets/womens-day-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-page-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(5px);
+  z-index: 0;
+}
+
+.sticker {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.45;
+  z-index: 1;
+  filter: drop-shadow(0 0 15px rgba(236, 72, 153, 0.25));
+  transition: opacity 0.5s ease;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0) translateX(0) rotate(0);
+  }
+
+  33% {
+    transform: translateY(-30px) translateX(15px) rotate(10deg);
+  }
+
+  66% {
+    transform: translateY(-15px) translateX(-10px) rotate(-5deg);
+  }
+}
+
+@keyframes sway {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(-5deg) scale(1);
+  }
+
+  50% {
+    transform: translateY(-20px) rotate(5deg) scale(1.05);
+  }
+}
+
+.sticker-1 {
+  top: 5%;
+  left: 5%;
+  font-size: 3.8rem;
+  animation: float 9s ease-in-out infinite;
+}
+
+.sticker-2 {
+  top: 18%;
+  right: 8%;
+  font-size: 3.2rem;
+  animation: sway 8s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+.sticker-3 {
+  bottom: 10%;
+  left: 12%;
+  font-size: 4.2rem;
+  animation: float 11s ease-in-out infinite;
+  animation-delay: 3s;
+}
+
+.sticker-4 {
+  bottom: 6%;
+  right: 6%;
+  font-size: 3.4rem;
+  animation: sway 10s ease-in-out infinite;
+  animation-delay: 0.8s;
+}
+
+.sticker-5 {
+  top: 45%;
+  left: 2%;
+  font-size: 2.6rem;
+  animation: float 13s ease-in-out infinite;
+  animation-delay: 4.5s;
+}
+
+.sticker-6 {
+  top: 35%;
+  right: 3%;
+  font-size: 2.9rem;
+  animation: sway 12s ease-in-out infinite;
+  animation-delay: 2.2s;
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 800px;
+  margin-top: 80px;
+  padding: 20px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .auth-container {
+    margin-top: 60px;
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-container {
+    margin-top: 40px;
+  }
 }
 
 #root {
@@ -35,15 +216,16 @@ h3 {
 
 /* Glassmorphism Classes */
 .glass {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
 }
 
 .button-primary {
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  background: linear-gradient(135deg, #ec4899 0%, #d946ef 100%);
   color: white;
   padding: 12px 24px;
   border-radius: 12px;
@@ -51,12 +233,12 @@ h3 {
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
 }
 
 .button-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4);
 }
 
 .button-primary:disabled {
@@ -78,9 +260,10 @@ nav {
   padding: 0 40px;
   box-sizing: border-box;
   z-index: 1000;
-  background: rgba(12, 14, 20, 0.8);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
 }
 
 .container {
@@ -96,8 +279,10 @@ nav {
 }
 
 .test-card:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(99, 102, 241, 0.5);
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(236, 72, 153, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transform: translateY(-4px);
 }
 
 /* Question Section */
@@ -110,21 +295,26 @@ nav {
   text-align: left;
   padding: 16px;
   margin-top: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 12px;
-  color: white;
+  color: #1f2937;
   cursor: pointer;
   transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .option-button:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.15);
 }
 
 .option-button.selected {
-  background: rgba(99, 102, 241, 0.2);
-  border-color: #6366f1;
+  background: rgba(236, 72, 153, 0.1);
+  border-color: #ec4899;
+  color: #db2777;
+  font-weight: 500;
 }
 
 /* Timer */
@@ -140,17 +330,18 @@ nav {
 
 /* New: Upload Area */
 .upload-zone {
-  border: 2px dashed rgba(255, 255, 255, 0.1);
+  border: 2px dashed rgba(0, 0, 0, 0.15);
   border-radius: 16px;
   padding: 40px;
   text-align: center;
   transition: all 0.3s;
   cursor: pointer;
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .upload-zone:hover {
-  border-color: #6366f1;
-  background: rgba(99, 102, 241, 0.05);
+  border-color: #ec4899;
+  background: rgba(236, 72, 153, 0.05);
 }
 
 /* New: Modal */
@@ -160,12 +351,12 @@ nav {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(255, 255, 255, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 2000;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
 }
 
 .modal-content {
@@ -174,4 +365,125 @@ nav {
   max-height: 80vh;
   overflow-y: auto;
   padding: 32px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive Design Overrides */
+
+/* Tablet & Smaller Devices */
+@media screen and (max-width: 768px) {
+  nav {
+    padding: 0 20px;
+    height: 60px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .container {
+    margin-top: 80px;
+    padding: 15px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  .button-primary {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  /* Force grids to single column on mobile */
+  .container>div {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Adjust exam layout and admin tabs specifically */
+  .exam-layout>div,
+  .admin-layout>div {
+    padding: 20px !important;
+  }
+
+  table,
+  thead,
+  tbody,
+  th,
+  td,
+  tr {
+    display: block;
+  }
+
+  /* Force tables to stack on mobile */
+  thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  tr {
+    border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+    margin-bottom: 10px;
+  }
+
+  td {
+    border: none !important;
+    position: relative;
+    padding-left: 50% !important;
+    text-align: right !important;
+  }
+
+  td:before {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: 45%;
+    padding-right: 10px;
+    white-space: nowrap;
+    text-align: left;
+    font-weight: bold;
+    opacity: 0.7;
+    content: attr(data-label);
+  }
+
+  /* Make modal content full width */
+  .modal-content {
+    width: 95%;
+    padding: 20px;
+  }
+}
+
+/* Small Mobile Devices */
+@media screen and (max-width: 480px) {
+  nav {
+    flex-direction: column;
+    height: auto;
+    padding: 10px;
+  }
+
+  .container {
+    margin-top: 120px;
+  }
+
+  .glass {
+    padding: 16px !important;
+  }
+
+  .question-box h2 {
+    font-size: 1.1rem !important;
+  }
+
+  .timer-pill {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+  }
 }

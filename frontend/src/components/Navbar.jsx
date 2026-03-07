@@ -1,15 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldAlert, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
+import logo from '../assets/logo.png';
 
 const Navbar = ({ user, handleLogout }) => (
     <nav>
         <div className="nav-brand">
-            <div className="nav-icon-bg">
-                <ShieldAlert size={20} color="white" />
-            </div>
-            <Link to="/" style={{ textDecoration: 'none', color: 'white' }}>
-                <h2 className="nav-title">Flytutor</h2>
+            <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <img src={logo} alt="FlyTutor Logo" style={{ height: '40px' }} />
+                <h2 className="nav-title" style={{ color: '#1f2937' }}>Flytutor</h2>
             </Link>
         </div>
 
@@ -21,9 +20,9 @@ const Navbar = ({ user, handleLogout }) => (
                 </div>
 
                 <div className="nav-links">
-                    <Link to="/" style={{ color: 'white', textDecoration: 'none', fontSize: '0.9rem' }}>Dashboard</Link>
+                    <Link to="/" style={{ color: '#1f2937', textDecoration: 'none', fontSize: '0.9rem' }}>Dashboard</Link>
                     {user.role === 'ADMIN' && (
-                        <Link to="/admin" style={{ color: 'white', textDecoration: 'none', fontSize: '0.9rem' }}>Admin</Link>
+                        <Link to="/admin" style={{ color: '#1f2937', textDecoration: 'none', fontSize: '0.9rem' }}>Admin</Link>
                     )}
                     <button
                         onClick={handleLogout}
@@ -34,10 +33,7 @@ const Navbar = ({ user, handleLogout }) => (
                 </div>
             </div>
         ) : (
-            <div style={{ display: 'flex', gap: '16px' }}>
-                <Link to="/login" style={{ color: 'white', textDecoration: 'none', fontSize: '0.9rem' }}>Login</Link>
-                <Link to="/register" style={{ color: '#6366f1', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600 }}>Register</Link>
-            </div>
+            null
         )}
     </nav>
 );

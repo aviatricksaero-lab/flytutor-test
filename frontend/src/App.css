@@ -37,9 +37,9 @@
 .auth-select {
     width: 100%;
     padding: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(0, 0, 0, 0.2);
-    color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.5);
+    color: #1f2937;
     border-radius: 8px;
     box-sizing: border-box;
     outline: none;
@@ -48,8 +48,9 @@
 
 .auth-input:focus,
 .auth-select:focus {
-    border-color: #6366f1;
-    background: rgba(0, 0, 0, 0.3);
+    border-color: #ec4899;
+    background: #ffffff;
+    box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.1);
 }
 
 .auth-error {
@@ -67,7 +68,7 @@
 }
 
 .auth-footer a {
-    color: #6366f1;
+    color: #ec4899;
     text-decoration: none;
 }
 
@@ -79,32 +80,32 @@
 }
 
 .nav-icon-bg {
-    background: #6366f1;
+    background: #ec4899;
     padding: 8px;
-    borderRadius: 10px;
+    border-radius: 10px;
 }
 
 .nav-title {
-    fontSize: 1.2rem;
-    fontWeight: 700;
+    font-size: 1.2rem;
+    font-weight: 700;
     margin: 0;
 }
 
 .nav-user-info {
     font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(31, 41, 55, 0.6);
 }
 
 .nav-user-name {
-    color: #fff;
+    color: #1f2937;
     font-weight: 600;
 }
 
 .nav-role-badge {
     margin-left: 8px;
     padding: 2px 8px;
-    background: rgba(99, 102, 241, 0.1);
-    color: #6366f1;
+    background: rgba(236, 72, 153, 0.1);
+    color: #ec4899;
     border-radius: 4px;
     font-size: 0.7rem;
 }
@@ -133,22 +134,22 @@
 
 .admin-form-grid {
     display: grid;
-    gridTemplateColumns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 20px;
     margin-bottom: 32px;
 }
 
 .admin-upload-card {
     padding: 20px;
-    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border: 1px dashed rgba(0, 0, 0, 0.2);
     text-align: center;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .admin-upload-card:hover {
-    border-color: #6366f1;
-    background: rgba(99, 102, 241, 0.05);
+    border-color: #ec4899;
+    background: rgba(236, 72, 153, 0.05);
 }
 
 /* Exam Page Layout */

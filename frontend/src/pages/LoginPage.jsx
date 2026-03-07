@@ -23,39 +23,49 @@ const LoginPage = ({ setUser }) => {
     };
 
     return (
-        <div className="container" style={{ maxWidth: '400px', marginTop: '150px' }}>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass auth-page">
-                <h1 style={{ textAlign: 'center', marginBottom: '32px' }}>Login</h1>
-                <form onSubmit={handleSubmit}>
-                    <div className="auth-form-group">
-                        <label className="auth-label">Email Address</label>
-                        <input
-                            type="email"
-                            required
-                            className="auth-input"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        />
+        <div className="auth-page-wrapper">
+            <div className="sticker sticker-1">🌸</div>
+            <div className="sticker sticker-2">🎀</div>
+            <div className="sticker sticker-3">💐</div>
+            <div className="sticker sticker-4">💖</div>
+            <div className="sticker sticker-5">✨</div>
+            <div className="sticker sticker-6">🌷</div>
+
+            <div className="auth-container">
+                <h1 className="scholarship-hero">Women's Day Scholarship Exam</h1>
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass auth-page" style={{ width: '100%', maxWidth: '400px' }}>
+                    <h2 style={{ textAlign: 'center', marginBottom: '32px' }}>Login</h2>
+                    <form onSubmit={handleSubmit}>
+                        <div className="auth-form-group">
+                            <label className="auth-label">Email Address</label>
+                            <input
+                                type="email"
+                                required
+                                className="auth-input"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            />
+                        </div>
+                        <div className="auth-form-group">
+                            <label className="auth-label">Password</label>
+                            <input
+                                type="password"
+                                required
+                                className="auth-input"
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            />
+                        </div>
+                        {error && <p className="auth-error">{error}</p>}
+                        <button className="button-primary full-width">
+                            <LogIn size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} /> Sign In
+                        </button>
+                    </form>
+                    <div className="auth-footer">
+                        Don't have an account? <Link to="/register">Register</Link>
                     </div>
-                    <div className="auth-form-group">
-                        <label className="auth-label">Password</label>
-                        <input
-                            type="password"
-                            required
-                            className="auth-input"
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        />
-                    </div>
-                    {error && <p className="auth-error">{error}</p>}
-                    <button className="button-primary full-width">
-                        <LogIn size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} /> Sign In
-                    </button>
-                </form>
-                <div className="auth-footer">
-                    Don't have an account? <Link to="/register">Register</Link>
-                </div>
-            </motion.div>
+                </motion.div>
+            </div>
         </div>
     );
 };

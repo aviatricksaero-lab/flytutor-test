@@ -7,21 +7,37 @@ const AdminDashboard = () => {
     const [tab, setTab] = useState('upload');
     const [reports, setReports] = useState([]);
     const [users, setUsers] = useState([]);
+    const [tests, setTests] = useState([]);
     const [uploadStatus, setUploadStatus] = useState('');
     const [isUploading, setIsUploading] = useState(false);
     const [selectedSubmission, setSelectedSubmission] = useState(null);
     const [pdfFileName, setPdfFileName] = useState('');
+    const [keyFileName, setKeyFileName] = useState('');
     const [title, setTitle] = useState('');
     const [duration, setDuration] = useState('30');
     const pdfRef = useRef();
+    const keyRef = useRef();
 
     const refreshData = () => {
-        axios.get('/api/admin/submissions')
-            .then(res => setReports(res.data))
-            .catch(() => { });
-        axios.get('/api/admin/users')
-            .then(res => setUsers(res.data))
-            .catch(() => { });
+        axios.get('/api/admin/submissions').then(res => setReports(res.data)).catch(() => { });
+        axios.get('/api/admin/users').then(res => setUsers(res.data)).catch(() => { });
+        axios.get('/api/admin/tests').then(res => setTests(res.data)).catch(() => { });
+    };
+
+    const handleDeleteUser = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this user? All their submissions will be erased.")) return;
+        try {
+            await axios.delete(`/api/admin/users/${id}`);
+            refreshData();
+        } catch (err) { alert(err.response?.data?.error || "Error deleting user"); }
+    };
+
+    const handleDeleteTest = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this test? The PDF and all student submissions will be completely removed.")) return;
+        try {
+            await axios.delete(`/api/admin/tests/${id}`);
+            refreshData();
+        } catch (err) { alert(err.response?.data?.error || "Error deleting test"); }
     };
 
     useEffect(() => { refreshData(); }, []);
@@ -34,6 +50,9 @@ const AdminDashboard = () => {
         formData.append('title', title);
         formData.append('duration', duration);
         formData.append('pdfFile', pdfRef.current.files[0]);
+        if (keyRef.current?.files[0]) {
+            formData.append('answerKey', keyRef.current.files[0]);
+        }
 
         setIsUploading(true);
         setUploadStatus('⏳ Parsing PDF & extracting questions...');
@@ -45,7 +64,9 @@ const AdminDashboard = () => {
             setTitle('');
             setDuration('30');
             setPdfFileName('');
+            setKeyFileName('');
             if (pdfRef.current) pdfRef.current.value = '';
+            if (keyRef.current) keyRef.current.value = '';
             refreshData();
         } catch (err) {
             const msg = err.response?.data?.error || err.message || 'Unknown error';
@@ -56,10 +77,17 @@ const AdminDashboard = () => {
     };
 
     return (
-        <div className="container" style={{ maxWidth: '1200px' }}>
+        <div className="container" style={{ maxWidth: '1200px', position: 'relative' }}>
+            <div className="sticker sticker-1" style={{ position: 'fixed', left: '20px', top: '20%' }}>🌸</div>
+            <div className="sticker sticker-2" style={{ position: 'fixed', right: '20px', top: '15%' }}>✨</div>
+            <div className="sticker sticker-3" style={{ position: 'fixed', left: '30px', bottom: '10%' }}>💝</div>
+            <div className="sticker sticker-4" style={{ position: 'fixed', right: '30px', bottom: '15%' }}>🌺</div>
+            <div className="sticker sticker-5" style={{ position: 'fixed', left: '10px', top: '45%' }}>🌷</div>
+            <div className="sticker sticker-6" style={{ position: 'fixed', right: '15px', top: '55%' }}>🎀</div>
             <div style={{ display: 'flex', gap: '16px', marginBottom: '40px', flexWrap: 'wrap' }}>
                 {[
                     { key: 'upload', label: 'Create Exam', icon: <Upload size={18} /> },
+                    { key: 'tests', label: 'Manage Tests', icon: <FileText size={18} /> },
                     { key: 'reports', label: 'Test Reports', icon: <ShieldCheck size={18} /> },
                     { key: 'users', label: 'All Students', icon: <Users size={18} /> },
                 ].map(t => (
@@ -69,9 +97,10 @@ const AdminDashboard = () => {
                         style={{
                             flex: 1,
                             background: tab === t.key
-                                ? 'linear-gradient(135deg, #6366f1, #a855f7)'
-                                : 'rgba(255,255,255,0.05)',
-                            border: '1px solid rgba(255,255,255,0.1)',
+                                ? 'linear-gradient(135deg, #ec4899, #d946ef)'
+                                : 'rgba(0,0,0,0.05)',
+                            color: tab === t.key ? '#fff' : '#1f2937',
+                            border: '1px solid rgba(0,0,0,0.1)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
                         }}
                         onClick={() => setTab(t.key)}
@@ -121,7 +150,7 @@ const AdminDashboard = () => {
                                 className="glass"
                                 style={{
                                     padding: '48px 20px', textAlign: 'center', cursor: 'pointer',
-                                    border: pdfFileName ? '2px solid #10b981' : '2px dashed rgba(255,255,255,0.15)',
+                                    border: pdfFileName ? '2px solid #10b981' : '2px dashed rgba(0,0,0,0.15)',
                                     borderRadius: '16px', transition: 'all 0.2s'
                                 }}
                                 onClick={() => pdfRef.current.click()}
@@ -154,13 +183,53 @@ const AdminDashboard = () => {
                                     onChange={e => setPdfFileName(e.target.files[0]?.name || '')} />
                             </div>
 
-                            <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(99,102,241,0.05)', borderRadius: '12px', border: '1px solid rgba(99,102,241,0.2)' }}>
+                            <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(236,72,153,0.05)', borderRadius: '12px', border: '1px solid rgba(236,72,153,0.2)' }}>
                                 <p style={{ margin: 0, fontSize: '0.82rem', opacity: 0.7 }}>
                                     <strong>📋 Supported PDF Format:</strong><br />
                                     1. What is the capital of France?<br />
                                     A) Paris&nbsp;&nbsp;&nbsp;B) London&nbsp;&nbsp;&nbsp;C) Berlin&nbsp;&nbsp;&nbsp;D) Rome<br />
                                     Answer: A
                                 </p>
+                            </div>
+                        </div>
+
+                        {/* Answer Key Upload */}
+                        <div style={{ marginBottom: '32px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', opacity: 0.7, fontSize: '0.85rem' }}>Answer Key PDF (Optional)</label>
+                            <div
+                                className="glass"
+                                style={{
+                                    padding: '32px 20px', textAlign: 'center', cursor: 'pointer',
+                                    border: keyFileName ? '2px solid #10b981' : '2px dashed rgba(0,0,0,0.15)',
+                                    borderRadius: '16px', transition: 'all 0.2s'
+                                }}
+                                onClick={() => keyRef.current.click()}
+                                onDragOver={e => e.preventDefault()}
+                                onDrop={e => {
+                                    e.preventDefault();
+                                    const file = e.dataTransfer.files[0];
+                                    if (file && file.type === 'application/pdf') {
+                                        keyRef.current.files = e.dataTransfer.files;
+                                        setKeyFileName(file.name);
+                                    }
+                                }}
+                            >
+                                {keyFileName ? (
+                                    <>
+                                        <CheckCircle size={32} color="#10b981" style={{ marginBottom: '8px' }} />
+                                        <p style={{ margin: 0, color: '#10b981', fontWeight: 600 }}>{keyFileName}</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <FileText size={32} style={{ marginBottom: '8px', opacity: 0.4 }} />
+                                        <p style={{ margin: 0, fontWeight: 600 }}>Drag & drop or click Answer Key</p>
+                                        <p style={{ margin: '4px 0 0', fontSize: '0.8rem', opacity: 0.5 }}>
+                                            Optional: override answers via separate PDF
+                                        </p>
+                                    </>
+                                )}
+                                <input ref={keyRef} type="file" accept=".pdf" style={{ display: 'none' }}
+                                    onChange={e => setKeyFileName(e.target.files[0]?.name || '')} />
                             </div>
                         </div>
 
@@ -213,6 +282,39 @@ const AdminDashboard = () => {
                     </motion.div>
                 )}
 
+                {/* ═══ MANAGE TESTS TAB ═══ */}
+                {tab === 'tests' && (
+                    <motion.div key="tests" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="glass" style={{ padding: '32px' }}>
+                        <h2 style={{ marginBottom: '32px' }}>Manage Assessments ({tests.length})</h2>
+                        {tests.length === 0 ? (
+                            <p style={{ opacity: 0.5, textAlign: 'center', padding: '40px' }}>No tests available.</p>
+                        ) : (
+                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                                <thead>
+                                    <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                                        <th style={{ padding: '16px' }}>Title</th>
+                                        <th style={{ padding: '16px' }}>Questions</th>
+                                        <th style={{ padding: '16px' }}>Duration</th>
+                                        <th style={{ padding: '16px', textAlign: 'right' }}>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {tests.map((t, i) => (
+                                        <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                                            <td style={{ padding: '16px' }}>{t.title}</td>
+                                            <td style={{ padding: '16px', opacity: 0.7 }}>{t.questions?.length || 0}</td>
+                                            <td style={{ padding: '16px', opacity: 0.7 }}>{t.duration} min</td>
+                                            <td style={{ padding: '16px', textAlign: 'right' }}>
+                                                <button onClick={() => handleDeleteTest(t._id)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>Delete</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </motion.div>
+                )}
+
                 {/* ═══ USERS TAB ═══ */}
                 {tab === 'users' && (
                     <motion.div key="users" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="glass" style={{ padding: '32px' }}>
@@ -222,19 +324,33 @@ const AdminDashboard = () => {
                         ) : (
                             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                                 <thead>
-                                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                                    <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                                         <th style={{ padding: '16px' }}>Name</th>
                                         <th style={{ padding: '16px' }}>Email</th>
                                         <th style={{ padding: '16px' }}>Role</th>
+                                        <th style={{ padding: '16px' }}>Desired Mark</th>
+                                        <th style={{ padding: '16px', textAlign: 'right' }}>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {users.map((u, i) => (
-                                        <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                                             <td style={{ padding: '16px' }}>{u.name}</td>
                                             <td style={{ padding: '16px', opacity: 0.7 }}>{u.email}</td>
                                             <td style={{ padding: '16px' }}>
-                                                <span style={{ fontSize: '0.75rem', padding: '4px 8px', background: 'rgba(99,102,241,0.1)', color: '#6366f1', borderRadius: '4px' }}>{u.role}</span>
+                                                <span style={{ fontSize: '0.75rem', padding: '4px 8px', background: 'rgba(236,72,153,0.1)', color: '#ec4899', borderRadius: '4px' }}>{u.role}</span>
+                                            </td>
+                                            <td style={{ padding: '16px', opacity: 0.7 }}>
+                                                {u.desiredMark ? (
+                                                    <span style={{ fontWeight: 'bold', color: '#10b981' }}>{u.desiredMark}</span>
+                                                ) : (
+                                                    <span style={{ opacity: 0.5 }}>-</span>
+                                                )}
+                                            </td>
+                                            <td style={{ padding: '16px', textAlign: 'right' }}>
+                                                {u.role !== 'ADMIN' && (
+                                                    <button onClick={() => handleDeleteUser(u._id)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>Delete</button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}

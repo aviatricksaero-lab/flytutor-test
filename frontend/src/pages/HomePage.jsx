@@ -18,6 +18,27 @@ const HomePage = ({ user }) => {
 
     return (
         <div className="container">
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass"
+                style={{
+                    padding: '20px 32px',
+                    marginBottom: '40px',
+                    background: 'linear-gradient(90deg, #ec4899 0%, #d946ef 100%)',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '20px',
+                    borderRadius: '20px'
+                }}
+            >
+                <div style={{ fontSize: '2.5rem' }}>✨</div>
+                <div>
+                    <h2 style={{ margin: 0, fontSize: '1.4rem' }}>Happy Women's Day! 🌸</h2>
+                    <p style={{ margin: 0, opacity: 0.9, fontSize: '0.9rem' }}>To all the amazing women, you are inspiring, powerful, and fearless. Shine on!</p>
+                </div>
+            </motion.div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
                 <div>
                     <h1 style={{ margin: 0 }}>Assessments Dashboard</h1>
@@ -40,12 +61,12 @@ const HomePage = ({ user }) => {
                             {item.hasSubmitted ? (
                                 <span style={{ fontSize: '0.75rem', padding: '4px 8px', background: 'rgba(16,185,129,0.1)', color: '#10b981', borderRadius: '4px', height: 'fit-content' }}>Completed</span>
                             ) : (
-                                <span style={{ fontSize: '0.75rem', padding: '4px 8px', background: 'rgba(99,102,241,0.1)', color: '#6366f1', borderRadius: '4px', height: 'fit-content' }}>Pending</span>
+                                <span style={{ fontSize: '0.75rem', padding: '4px 8px', background: 'rgba(236,72,153,0.1)', color: '#ec4899', borderRadius: '4px', height: 'fit-content' }}>Pending</span>
                             )}
                         </div>
                         <p style={{ fontSize: '0.9rem', opacity: 0.6, height: '3em', overflow: 'hidden' }}>{item.description}</p>
 
-                        <div style={{ display: 'flex', gap: '16px', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', margin: '20px 0' }}>
+                        <div style={{ display: 'flex', gap: '16px', color: 'rgba(31,41,55,0.6)', fontSize: '0.8rem', margin: '20px 0' }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><ClipboardList size={14} /> {item.questions?.length} Items</span>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><FileText size={14} /> Trainer: {item.trainer?.name}</span>
                         </div>
@@ -58,7 +79,7 @@ const HomePage = ({ user }) => {
                             ) : (
                                 <button
                                     className="button-primary"
-                                    style={{ flex: 1, fontSize: '0.85rem', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }}
+                                    style={{ flex: 1, fontSize: '0.85rem', background: 'rgba(0,0,0,0.05)', color: '#1f2937', border: '1px solid rgba(0,0,0,0.1)' }}
                                     onClick={() => alert(`Your Score: ${item.mySubmission.score} / ${item.questions.length}`)}
                                 >
                                     View Score
@@ -67,7 +88,7 @@ const HomePage = ({ user }) => {
                             {item.pdfUrl && (
                                 <button
                                     className="button-primary"
-                                    style={{ background: 'transparent', border: '1px solid #6366f1', color: '#6366f1', padding: '10px' }}
+                                    style={{ background: 'transparent', border: '1px solid #ec4899', color: '#ec4899', padding: '10px' }}
                                     onClick={() => window.open(item.pdfUrl.startsWith('http') ? item.pdfUrl : `http://localhost:5000${item.pdfUrl}`, '_blank')}
                                 >
                                     <Eye size={16} />
