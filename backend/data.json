@@ -1,0 +1,61 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "role": "student"
+    },
+    {
+      "id": 2,
+      "name": "Admin User",
+      "email": "admin@flytutor.com",
+      "role": "admin"
+    }
+  ],
+  "tests": [
+    {
+      "id": 101,
+      "title": "Basic Aviation Knowledge",
+      "duration": 30,
+      "questions": [
+        {
+          "id": 1,
+          "text": "What is the primary lifting surface of an aircraft?",
+          "options": [
+            "Wing",
+            "Tail",
+            "Engine",
+            "Fuselage"
+          ],
+          "correct": 0
+        },
+        {
+          "id": 2,
+          "text": "Who were the Wright brothers?",
+          "options": [
+            "Scientists",
+            "Bicycle mechanics",
+            "Pilots",
+            "All of the above"
+          ],
+          "correct": 3
+        }
+      ]
+    }
+  ],
+  "reports": [
+    {
+      "id": 1772879052051,
+      "studentId": 1,
+      "testId": 101,
+      "answers": {
+        "1": 0
+      },
+      "score": 0,
+      "startTime": "2026-03-07T10:24:07.031Z",
+      "endTime": "2026-03-07T10:24:12.031Z",
+      "date": "2026-03-07T10:24:12.051Z"
+    }
+  ]
+}
