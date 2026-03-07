@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { AlertTriangle, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ShieldCheck, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ExamPage = () => {
@@ -12,6 +12,7 @@ const ExamPage = () => {
     const [answers, setAnswers] = useState({});
     const [timeLeft, setTimeLeft] = useState(0);
     const [isFinished, setIsFinished] = useState(false);
+    const [timeError, setTimeError] = useState(false);
 
     // High Secure Variables
     const [warnings, setWarnings] = useState(0);
@@ -30,10 +31,25 @@ const ExamPage = () => {
 
     // Fetch Assessment
     useEffect(() => {
+        // Time Validation: 10 AM to 11 AM check
+        const now = new Date();
+        const hrs = now.getHours();
+        if (hrs < 10 || hrs >= 11) {
+            setTimeError(true);
+        }
+
         axios.get('/api/assessments').then(res => {
             const selected = res.data.find(t => t._id === id);
             setTest(selected);
-            setTimeLeft((selected.duration || 30) * 60);
+
+            // Calculate time left: Min of (Duration) or (Time until 11 AM)
+            const testDurationSeconds = (selected.duration || 30) * 60;
+            const endWindow = new Date();
+            endWindow.setHours(11, 0, 0, 0);
+            const secondsUntil11am = Math.floor((endWindow - now) / 1000);
+
+            // Set whichever is shorter
+            setTimeLeft(Math.min(testDurationSeconds, secondsUntil11am));
         });
     }, [id]);
 
@@ -46,7 +62,9 @@ const ExamPage = () => {
                 assessmentId: id,
                 answers: Object.values(answersRef.current)
             });
-            if (forced) {
+            if (forced === "TIME") {
+                alert("🚨 TIME EXPIRED: The 11:00 AM deadline has been reached. Your exam was automatically submitted.");
+            } else if (forced) {
                 alert("🚨 EXAM TERMINATED: Too many security violations.");
             } else {
                 alert("✅ Exam submitted successfully.");
@@ -153,10 +171,18 @@ const ExamPage = () => {
     // Timer logic
     useEffect(() => {
         if (timeLeft <= 0 && test) {
-            if (!isFinished) handleSubmit();
+            if (!isFinished) handleSubmit("TIME");
             return;
         }
-        const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+        const timer = setInterval(() => {
+            // Hard check for 11:00 AM
+            const now = new Date();
+            if (now.getHours() >= 11) {
+                if (!isFinished) handleSubmit("TIME");
+                return;
+            }
+            setTimeLeft(prev => prev - 1);
+        }, 1000);
         return () => clearInterval(timer);
     }, [timeLeft, test, isFinished]);
 
@@ -182,6 +208,27 @@ const ExamPage = () => {
     };
 
     if (!test) return <div className="container">Loading Exam...</div>;
+
+    if (timeError) {
+        return (
+            <div className="auth-page-wrapper">
+                <div className="sticker sticker-1">🦋</div>
+                <div className="sticker sticker-2">🍀</div>
+                <div className="sticker sticker-3">🌟</div>
+                <div className="sticker sticker-4">💖</div>
+                <div className="container" style={{ maxWidth: '600px', textAlign: 'center', zIndex: 2 }}>
+                    <div className="glass" style={{ padding: '40px' }}>
+                        <Clock size={64} color="#ef4444" style={{ marginBottom: '24px' }} />
+                        <h2 style={{ marginBottom: '16px' }}>Access Restricted</h2>
+                        <p style={{ marginBottom: '32px', opacity: 0.8 }}>This exam is only available between **10:00 AM** and **11:00 AM** MORNING.</p>
+                        <button className="button-primary full-width" onClick={() => navigate('/')}>
+                            Return to Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     if (!isFullscreen) {
         return (

@@ -7,11 +7,36 @@ import { motion } from 'framer-motion';
 const HomePage = ({ user }) => {
     const [assessments, setAssessments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [countdown, setCountdown] = useState("");
+    const [isExamWindow, setIsExamWindow] = useState(false);
 
     useEffect(() => {
         axios.get('/api/assessments')
             .then(res => setAssessments(res.data))
             .finally(() => setLoading(false));
+
+        const timer = setInterval(() => {
+            const now = new Date();
+            const hrs = now.getHours();
+
+            if (hrs >= 10 && hrs < 11) {
+                setIsExamWindow(true);
+                setCountdown("EXAM IS LIVE NOW! 🎯");
+            } else {
+                setIsExamWindow(false);
+                let target = new Date();
+                if (hrs >= 11) target.setDate(target.getDate() + 1);
+                target.setHours(10, 0, 0, 0);
+
+                const diff = target - now;
+                const h = Math.floor(diff / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((diff % (1000 * 60)) / 1000);
+                setCountdown(`${h}h ${m}m ${s}s until 10:00 AM Exam`);
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
     }, []);
 
     if (loading) return <div className="container">Loading Assessments...</div>;
@@ -25,18 +50,27 @@ const HomePage = ({ user }) => {
                 style={{
                     padding: '20px 32px',
                     marginBottom: '40px',
-                    background: 'linear-gradient(90deg, #ec4899 0%, #d946ef 100%)',
+                    background: isExamWindow ? 'linear-gradient(90deg, #10b981 0%, #34d399 100%)' : 'linear-gradient(90deg, #ec4899 0%, #d946ef 100%)',
                     color: 'white',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '20px',
-                    borderRadius: '20px'
+                    borderRadius: '20px',
+                    boxShadow: isExamWindow ? '0 0 20px rgba(16, 185, 129, 0.4)' : 'none'
                 }}
             >
-                <div style={{ fontSize: '2.5rem' }}>✨</div>
-                <div>
-                    <h2 style={{ margin: 0, fontSize: '1.4rem' }}>Happy Women's Day! 🌸</h2>
-                    <p style={{ margin: 0, opacity: 0.9, fontSize: '0.9rem' }}>To all the amazing women, you are inspiring, powerful, and fearless. Shine on!</p>
+                <div style={{ fontSize: '2.5rem' }}>{isExamWindow ? '🎯' : '✨'}</div>
+                <div style={{ flex: 1 }}>
+                    <h2 style={{ margin: 0, fontSize: '1.4rem' }}>{isExamWindow ? 'Exam Window Open!' : 'Happy Women\'s Day! 🌸'}</h2>
+                    <p style={{ margin: 0, opacity: 0.9, fontSize: '0.9rem' }}>
+                        {isExamWindow
+                            ? 'The scholarship exam is now ACTIVE. Please proceed immediately.'
+                            : 'To all the amazing women, you are inspiring, powerful, and fearless. Shine on!'}
+                    </p>
+                </div>
+                <div style={{ textAlign: 'right', borderLeft: '1px solid rgba(255,255,255,0.3)', paddingLeft: '20px' }}>
+                    <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', opacity: 0.8 }}>Next Scheduled Exam</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{countdown}</div>
                 </div>
             </motion.div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
@@ -73,9 +107,19 @@ const HomePage = ({ user }) => {
 
                         <div style={{ display: 'flex', gap: '12px' }}>
                             {!item.hasSubmitted ? (
-                                <Link to={`/test/${item._id}`} style={{ flex: 1 }}>
-                                    <button className="button-primary" style={{ width: '100%', fontSize: '0.85rem' }}>Start Exam</button>
-                                </Link>
+                                isExamWindow ? (
+                                    <Link to={`/test/${item._id}`} style={{ flex: 1 }}>
+                                        <button className="button-primary" style={{ width: '100%', fontSize: '0.85rem' }}>Start Exam</button>
+                                    </Link>
+                                ) : (
+                                    <button
+                                        className="button-primary"
+                                        style={{ flex: 1, width: '100%', fontSize: '0.85rem', opacity: 0.5, cursor: 'not-allowed', background: '#ccc' }}
+                                        onClick={() => alert("Exams can only be started between 10:00 AM and 11:00 AM.")}
+                                    >
+                                        Locked
+                                    </button>
+                                )
                             ) : (
                                 <button
                                     className="button-primary"
@@ -89,7 +133,7 @@ const HomePage = ({ user }) => {
                                 <button
                                     className="button-primary"
                                     style={{ background: 'transparent', border: '1px solid #ec4899', color: '#ec4899', padding: '10px' }}
-                                    onClick={() => window.open(item.pdfUrl.startsWith('http') ? item.pdfUrl : `http://localhost:5000${item.pdfUrl}`, '_blank')}
+                                    onClick={() => window.open(item.pdfUrl.startsWith('http') ? item.pdfUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${item.pdfUrl}`, '_blank')}
                                 >
                                     <Eye size={16} />
                                 </button>

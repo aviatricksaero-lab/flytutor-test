@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const RegisterPage = ({ setUser }) => {
     const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '' });
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
@@ -78,10 +79,22 @@ const RegisterPage = ({ setUser }) => {
                         </div>
                         <div className="auth-form-group">
                             <label className="auth-label">Password</label>
-                            <input
-                                type="password" required className="auth-input"
-                                value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            />
+                            <div className="password-input-wrapper">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    required
+                                    className="auth-input"
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                />
+                                <button
+                                    type="button"
+                                    className="password-toggle"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
                         </div>
                         {error && <p className="auth-error">{error}</p>}
                         <button type="submit" className="button-primary full-width">
