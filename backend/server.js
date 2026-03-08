@@ -154,7 +154,7 @@ app.post('/api/assessments/submit', auth, async (req, res) => {
   // Time Restriction: 10 AM to 11 AM only
   const now = new Date();
   const hours = now.getHours();
-  if (hours < 10 || hours >= 11) {
+  if (hours < 11 || hours >= 12) {
     return res.status(403).json({
       message: 'Assessment submission is only allowed between 10:00 AM and 11:00 AM IST.'
     });
