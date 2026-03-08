@@ -31,11 +31,11 @@ const ExamPage = () => {
 
     // Fetch Assessment
     useEffect(() => {
-        // Time Validation: 11 AM to 12 PM check
         const now = new Date();
         const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
         const hrs = istTime.getHours();
-        if (hrs < 16 || hrs >= 17) {
+        const mins = istTime.getMinutes();
+        if (hrs < 16 || hrs > 17 || (hrs === 17 && mins >= 30)) {
             setTimeError(true);
         }
 
@@ -55,14 +55,13 @@ const ExamPage = () => {
 
             setTest(selected);
 
-            // Calculate time left: Min of (Duration) or (Time until 05:00 PM IST)
             const testDurationSeconds = (selected.duration || 30) * 60;
             const endWindow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-            endWindow.setHours(17, 0, 0, 0);
-            const secondsUntil5pm = Math.floor((endWindow - new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))) / 1000);
+            endWindow.setHours(17, 30, 0, 0);
+            const secondsUntil530pm = Math.floor((endWindow - new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))) / 1000);
 
             // Set whichever is shorter
-            setTimeLeft(Math.max(0, Math.min(testDurationSeconds, secondsUntil5pm)));
+            setTimeLeft(Math.max(0, Math.min(testDurationSeconds, secondsUntil530pm)));
         });
     }, [id]);
 
@@ -76,7 +75,7 @@ const ExamPage = () => {
                 answers: answersRef.current // Send the object directly, backend handles indices
             });
             if (forced === "TIME") {
-                alert("🚨 TIME EXPIRED: The 05:00 PM deadline has been reached. Your exam was automatically submitted.");
+                alert("🚨 TIME EXPIRED: The 05:30 PM deadline has been reached. Your exam was automatically submitted.");
             } else if (forced) {
                 alert("🚨 EXAM TERMINATED: Too many security violations.");
             } else {
@@ -188,10 +187,10 @@ const ExamPage = () => {
             return;
         }
         const timer = setInterval(() => {
-            // Hard check for 05:00 PM IST
+            // Hard check for 05:30 PM IST
             const now = new Date();
             const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-            if (istTime.getHours() >= 17) {
+            if (istTime.getHours() > 17 || (istTime.getHours() === 17 && istTime.getMinutes() >= 30)) {
                 if (!isFinished) handleSubmit("TIME");
                 return;
             }
@@ -234,7 +233,7 @@ const ExamPage = () => {
                     <div className="glass" style={{ padding: '40px' }}>
                         <Clock size={64} color="#ef4444" style={{ marginBottom: '24px' }} />
                         <h2 style={{ marginBottom: '16px' }}>Access Restricted</h2>
-                        <p style={{ marginBottom: '32px', opacity: 0.8 }}>This exam is only available between **04:00 PM** and **05:00 PM** IST.</p>
+                        <p style={{ marginBottom: '32px', opacity: 0.8 }}>This exam is only available between **04:00 PM** and **05:30 PM** IST.</p>
                         <button className="button-primary full-width" onClick={() => navigate('/')}>
                             Return to Dashboard
                         </button>

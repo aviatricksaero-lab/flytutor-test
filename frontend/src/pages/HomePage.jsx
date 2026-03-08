@@ -19,14 +19,15 @@ const HomePage = ({ user }) => {
             const now = new Date();
             const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
             const hrs = istTime.getHours();
+            const mins = istTime.getMinutes();
 
-            if (hrs >= 16 && hrs < 17) {
+            if (hrs === 16 || (hrs === 17 && mins < 30)) {
                 setIsExamWindow(true);
                 setCountdown("EXAM IS LIVE NOW! 🎯");
             } else {
                 setIsExamWindow(false);
                 let target = new Date(istTime);
-                if (hrs >= 17) target.setDate(target.getDate() + 1);
+                if (hrs > 17 || (hrs === 17 && mins >= 30)) target.setDate(target.getDate() + 1);
                 target.setHours(16, 0, 0, 0);
 
                 const diff = target - istTime;
@@ -116,7 +117,7 @@ const HomePage = ({ user }) => {
                                     <button
                                         className="button-primary"
                                         style={{ flex: 1, width: '100%', fontSize: '0.85rem', opacity: 0.5, cursor: 'not-allowed', background: '#ccc' }}
-                                        onClick={() => alert("Exams can only be started between 04:00 PM and 05:00 PM.")}
+                                        onClick={() => alert("Exams can only be started between 04:00 PM and 05:30 PM.")}
                                     >
                                         Locked
                                     </button>

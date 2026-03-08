@@ -153,15 +153,16 @@ app.post('/api/assessments', auth, adminAuth, async (req, res) => {
 app.post('/api/assessments/submit', auth, async (req, res) => {
   const { assessmentId, answers } = req.body;
 
-  // Time Restriction: 04 PM to 05 PM IST
+  // Time Restriction: 04 PM to 05:30 PM IST
   const now = new Date();
   const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
   const hours = istTime.getHours();
+  const minutes = istTime.getMinutes();
 
-  if (hours < 16 || hours >= 17) {
-    console.log(`🚫 Submission rejected: Assessment submission is only allowed between 04:00 PM and 05:00 PM IST. Current time: ${istTime.toLocaleTimeString()} IST (Hours: ${hours})`);
+  if (hours < 16 || hours > 17 || (hours === 17 && minutes >= 30)) {
+    console.log(`🚫 Submission rejected: Assessment submission is only allowed between 04:00 PM and 05:30 PM IST. Current time: ${istTime.toLocaleTimeString()} IST (Hours: ${hours}, Minutes: ${minutes})`);
     return res.status(403).json({
-      message: 'Assessment submission is only allowed between 04:00 PM and 05:00 PM IST.'
+      message: 'Assessment submission is only allowed between 04:00 PM and 05:30 PM IST.'
     });
   }
 
