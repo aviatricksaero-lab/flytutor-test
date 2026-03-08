@@ -43,7 +43,7 @@ function App() {
     if (loading) return null;
 
     return (
-        <Router>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Navbar user={user} handleLogout={handleLogout} />
             <Routes>
                 <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage setUser={setUser} />} />
