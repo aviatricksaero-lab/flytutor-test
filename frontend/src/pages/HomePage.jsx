@@ -20,20 +20,20 @@ const HomePage = ({ user }) => {
             const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
             const hrs = istTime.getHours();
 
-            if (hrs >= 11 && hrs < 12) {
+            if (hrs >= 16 && hrs < 17) {
                 setIsExamWindow(true);
                 setCountdown("EXAM IS LIVE NOW! 🎯");
             } else {
                 setIsExamWindow(false);
                 let target = new Date(istTime);
-                if (hrs >= 12) target.setDate(target.getDate() + 1);
-                target.setHours(11, 0, 0, 0);
+                if (hrs >= 17) target.setDate(target.getDate() + 1);
+                target.setHours(16, 0, 0, 0);
 
                 const diff = target - istTime;
                 const h = Math.floor(diff / (1000 * 60 * 60));
                 const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                 const s = Math.floor((diff % (1000 * 60)) / 1000);
-                setCountdown(`${h}h ${m}m ${s}s until 11:00 AM Exam`);
+                setCountdown(`${h}h ${m}m ${s}s until 04:00 PM Exam`);
             }
         }, 1000);
 
@@ -116,7 +116,7 @@ const HomePage = ({ user }) => {
                                     <button
                                         className="button-primary"
                                         style={{ flex: 1, width: '100%', fontSize: '0.85rem', opacity: 0.5, cursor: 'not-allowed', background: '#ccc' }}
-                                        onClick={() => alert("Exams can only be started between 11:00 AM and 12:00 PM.")}
+                                        onClick={() => alert("Exams can only be started between 04:00 PM and 05:00 PM.")}
                                     >
                                         Locked
                                     </button>
@@ -144,15 +144,7 @@ const HomePage = ({ user }) => {
                                     </button>
                                 </div>
                             )}
-                            {item.pdfUrl && (
-                                <button
-                                    className="button-primary"
-                                    style={{ background: 'transparent', border: '1px solid #ec4899', color: '#ec4899', padding: '10px' }}
-                                    onClick={() => window.open(item.pdfUrl.startsWith('http') ? item.pdfUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${item.pdfUrl}`, '_blank')}
-                                >
-                                    <Eye size={16} />
-                                </button>
-                            )}
+
                         </div>
                     </motion.div>
                 ))}

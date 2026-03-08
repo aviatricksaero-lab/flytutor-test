@@ -35,22 +35,34 @@ const ExamPage = () => {
         const now = new Date();
         const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
         const hrs = istTime.getHours();
-        if (hrs < 11 || hrs >= 12) {
+        if (hrs < 16 || hrs >= 17) {
             setTimeError(true);
         }
 
         axios.get('/api/assessments').then(res => {
             const selected = res.data.find(t => t._id === id);
+
+            if (!selected) {
+                navigate('/');
+                return;
+            }
+
+            if (selected.hasSubmitted) {
+                alert("You have already completed this assessment.");
+                navigate('/');
+                return;
+            }
+
             setTest(selected);
 
-            // Calculate time left: Min of (Duration) or (Time until 12 PM IST)
+            // Calculate time left: Min of (Duration) or (Time until 05:00 PM IST)
             const testDurationSeconds = (selected.duration || 30) * 60;
             const endWindow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-            endWindow.setHours(12, 0, 0, 0);
-            const secondsUntil12pm = Math.floor((endWindow - new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))) / 1000);
+            endWindow.setHours(17, 0, 0, 0);
+            const secondsUntil5pm = Math.floor((endWindow - new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))) / 1000);
 
             // Set whichever is shorter
-            setTimeLeft(Math.min(testDurationSeconds, secondsUntil12pm));
+            setTimeLeft(Math.max(0, Math.min(testDurationSeconds, secondsUntil5pm)));
         });
     }, [id]);
 
@@ -61,10 +73,10 @@ const ExamPage = () => {
         try {
             await axios.post('/api/assessments/submit', {
                 assessmentId: id,
-                answers: Object.values(answersRef.current)
+                answers: answersRef.current // Send the object directly, backend handles indices
             });
             if (forced === "TIME") {
-                alert("🚨 TIME EXPIRED: The 12:00 PM deadline has been reached. Your exam was automatically submitted.");
+                alert("🚨 TIME EXPIRED: The 05:00 PM deadline has been reached. Your exam was automatically submitted.");
             } else if (forced) {
                 alert("🚨 EXAM TERMINATED: Too many security violations.");
             } else {
@@ -176,10 +188,10 @@ const ExamPage = () => {
             return;
         }
         const timer = setInterval(() => {
-            // Hard check for 12:00 PM IST
+            // Hard check for 05:00 PM IST
             const now = new Date();
             const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-            if (istTime.getHours() >= 12) {
+            if (istTime.getHours() >= 17) {
                 if (!isFinished) handleSubmit("TIME");
                 return;
             }
@@ -222,7 +234,7 @@ const ExamPage = () => {
                     <div className="glass" style={{ padding: '40px' }}>
                         <Clock size={64} color="#ef4444" style={{ marginBottom: '24px' }} />
                         <h2 style={{ marginBottom: '16px' }}>Access Restricted</h2>
-                        <p style={{ marginBottom: '32px', opacity: 0.8 }}>This exam is only available between **11:00 AM** and **12:00 PM** MORNING.</p>
+                        <p style={{ marginBottom: '32px', opacity: 0.8 }}>This exam is only available between **04:00 PM** and **05:00 PM** IST.</p>
                         <button className="button-primary full-width" onClick={() => navigate('/')}>
                             Return to Dashboard
                         </button>

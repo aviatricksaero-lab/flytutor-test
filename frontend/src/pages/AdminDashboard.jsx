@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { ShieldCheck, Users, FileText, Upload, CheckCircle } from 'lucide-react';
+import { ShieldCheck, Users, FileText, Upload, CheckCircle, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import * as XLSX from 'xlsx';
 
 const AdminDashboard = () => {
     const [tab, setTab] = useState('upload');
@@ -74,6 +75,29 @@ const AdminDashboard = () => {
         } finally {
             setIsUploading(false);
         }
+    };
+
+    const handleExportExcel = () => {
+        if (reports.length === 0) return alert("No reports to export.");
+
+        // Prepare data for Excel
+        const data = reports.map(r => ({
+            "Student Name": r.student?.name || "N/A",
+            "Student Email": r.student?.email || "N/A",
+            "Assessment Title": r.assessment?.title || "N/A",
+            "Score": r.score,
+            "Total Questions": r.assessment?.questions?.length || 0,
+            "Percentage": (((r.score || 0) / (r.assessment?.questions?.length || 1)) * 100).toFixed(2) + "%",
+            "Submission Date": new Date(r.createdAt).toLocaleString('en-IN')
+        }));
+
+        // Create sheet
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Results");
+
+        // Download file
+        XLSX.writeFile(workbook, `Assessment_Results_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
     return (
@@ -259,7 +283,12 @@ const AdminDashboard = () => {
                 {/* ═══ REPORTS TAB ═══ */}
                 {tab === 'reports' && (
                     <motion.div key="reports" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="glass" style={{ padding: '32px' }}>
-                        <h2 style={{ marginBottom: '32px' }}>Student Performance Reports</h2>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                            <h2 style={{ margin: 0 }}>Student Performance Reports</h2>
+                            <button className="button-primary" style={{ background: '#10b981' }} onClick={handleExportExcel}>
+                                <Download size={18} style={{ marginRight: '8px' }} /> Export to Excel
+                            </button>
+                        </div>
                         {reports.length === 0 ? (
                             <p style={{ opacity: 0.5, textAlign: 'center', padding: '40px' }}>No submissions yet.</p>
                         ) : (
