@@ -1,0 +1,92 @@
+[dotenv@17.3.1] injecting env (7) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+Assessment: sdGBDS
+1. What is the minimum age required to obtain a Remote Pilot Certificate in India?
+   Options: 16 years | 18 years | 21 years | 25 years
+   Correct Index: 2 (21 years)
+2. Which communication link is mandatory for real-time drone tracking?
+   Options: Wi-Fi | RF Telemetry | Bluetooth | Satellite
+   Correct Index: 3 (Satellite)
+3. Maximum take-off weight for a Small Classification drone is:
+   Options: <2 kg | 2–25 kg | 25–150 kg | >150 kg
+   Correct Index: 0 (<2 kg)
+4. What type of payload is prohibited on civil drones?
+   Options: Camera | Spraying tank | Explosives | Survey sensors
+   Correct Index: 0 (Camera)
+5. RPAS stands for:
+   Options: Remote Pilot Aircraft System | Remotely Piloted Aircraft System | Remote Powered Aircraft System | Radio Piloted Aircraft System
+   Correct Index: 0 (Remote Pilot Aircraft System)
+6. NPNT means:
+   Options: No Pilot No Takeoff | No Permit No Takeoff | No Permission No Takeoff | No Program No Takeoff
+   Correct Index: 0 (No Pilot No Takeoff)
+7. What is the maximum altitude allowed for most drone operations in India?
+   Options: 200 ft | 300 ft | 400 ft | 500 ft
+   Correct Index: 0 (200 ft)
+8. ESC stands for:
+   Options: Electronic Safety Controller | Electronic Speed Controller | Engine Speed Control | Electric System Control
+   Correct Index: 0 (Electronic Safety Controller)
+9. Which platform is used for drone permission in India?
+   Options: SkyNet | Drone Portal | Digital Sky Platform | Aero India Portal
+   Correct Index: 0 (SkyNet)
+10. Which weather condition is unsafe for drone flying?
+   Options: Clear sky | Light wind | Heavy rain | Calm weather
+   Correct Index: 0 (Clear sky)
+11. What should be checked before drone takeoff?
+   Options: Battery level | Propeller condition | GPS signal | All of the above
+   Correct Index: 0 (Battery level)
+12. Which device is used to control the drone from the ground?
+   Options: GPS module | Battery | Remote Controller / Transmitter | ESC
+   Correct Index: 0 (GPS module)
+13. What is meant by “line of sight”?
+   Options: Flying with GPS | Pilot can directly see the drone without obstruction | Flying with camera only | Flying beyond range
+   Correct Index: 0 (Flying with GPS)
+14. What does UAV stand for?
+   Options: Unmanned Aerial Vehicle | Universal Air Vehicle | United Aviation Vehicle | Uncontrolled Air Vehicle
+   Correct Index: 0 (Unmanned Aerial Vehicle)
+15. Which sensor helps measure drone orientation?
+   Options: Temperature sensor | Accelerometer | Camera | Microphone
+   Correct Index: 0 (Temperature sensor)
+16. What is the function of telemetry in drones?
+   Options: Camera control | Transmit flight data from drone to ground station | Increase battery life | Control propeller speed
+   Correct Index: 0 (Camera control)
+17. What is the role of firmware in drones?
+   Options: Software that controls drone hardware | Drone body structure | Battery management system | Camera sensor
+   Correct Index: 0 (Software that controls drone hardware)
+18. What is the main function of a ground control station?
+   Options: Charge drone battery | Monitor and control drone operations | Store drone motors | Control propellers manually
+   Correct Index: 0 (Charge drone battery)
+19. What should be done if drone battery level becomes critical?
+   Options: Increase speed | Turn off GPS | Land the drone immediately | Continue flying
+   Correct Index: 0 (Increase speed)
+20. What is meant by “yaw” movement in drones?
+   Options: Forward movement | Backward movement | Rotation left or right around vertical axis | Up and down movement
+   Correct Index: 0 (Forward movement)
+21. What is the main reason for compass calibration before flight?
+   Options: Increase drone speed | Ensure accurate directional data | Improve battery life | Increase GPS signal
+   Correct Index: 0 (Increase drone speed)
+22. What is the function of barometer sensor in drones?
+   Options: Measure GPS position | Measure altitude using air pressure | Control motor speed | Measure wind speed
+   Correct Index: 0 (Measure GPS position)
+23. What is the major advantage of fixed-wing drones compared to multirotor drones?
+   Options: Better hovering ability | Longer flight endurance | Easier vertical takeoff | Better camera stabilization
+   Correct Index: 0 (Better hovering ability)
+24. What is the main advantage of Li-Po batteries in drones?
+   Options: Low weight and high energy density | High voltage stability | Fast discharge capability | All of the above
+   Correct Index: 0 (Low weight and high energy density)
+25. What is the main risk of flying drones near high-voltage power lines?
+   Options: GPS improvement | Signal interference and crash risk | Battery charging | Improved flight stability
+   Correct Index: 0 (GPS improvement)
+26. What does “hovering” mean in drone flight?
+   Options: Moving forward quickly | Remaining stationary in the air at a fixed position | Landing slowly | Rotating continuously
+   Correct Index: 0 (Moving forward quickly)
+27. What does MTOW stand for in aviation?
+   Options: Maximum Takeoff Operation Weight | Maximum Takeoff Weight | Minimum Takeoff Weight | Maximum Transport Operational Weight
+   Correct Index: 0 (Maximum Takeoff Operation Weight)
+28. What is the most critical factor for safe drone flight planning?
+   Options: Drone colour | Weather conditions, airspace restrictions, and battery level | Camera megapixels | Drone brand
+   Correct Index: 0 (Drone colour)
+29. What is the main purpose of propeller balancing?
+   Options: Increase drone weight | Increase camera zoom | Improve GPS accuracy | Reduce vibration and improve flight stability
+   Correct Index: 0 (Increase drone weight)
+30. What is the primary advantage of LiDAR over photogrammetry?
+   Options: Ability to capture accurate elevation data even through vegetation | Lower cost | Higher camera resolution | Faster drone speed
+   Correct Index: 0 (Ability to capture accurate elevation data even through vegetation)

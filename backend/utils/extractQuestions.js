@@ -31,7 +31,8 @@ export function extractQuestions(text) {
         .replace(/ {2,}/g, ' ');
 
     // Split on question number patterns like:  1.  2.  Q1.  Q.1  (1)
-    const questionBlocks = normalized.split(/\n(?=(?:Q\.?\s*)?(?:\d{1,3})[.)]\s)/i).filter(b => b.trim());
+    // We split on whitespace OR newline followed by a question number pattern
+    const questionBlocks = normalized.split(/(?:\n|\s)(?=(?:Q\.?\s*)?(?:\d{1,3})[.)]\s)/i).filter(b => b.trim());
 
     for (const block of questionBlocks) {
         const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
@@ -51,16 +52,17 @@ export function extractQuestions(text) {
         for (let i = 1; i < lines.length; i++) {
             const line = lines[i];
 
-            // Check for explicit answer line: "Answer: B" or "Ans: 2"
-            const ansLine = line.match(/^(?:ans(?:wer)?|correct)\s*[:.]\s*([A-Da-d1-4])/i);
+            // Check for explicit answer line: "Answer: B", "Ans: (C)", "Option: 2"
+            const ansLine = line.match(/^(?:ans(?:wer)?|correct|option|key)\s*[:.-]?\s*\(?([A-Da-d1-4])\)?/i);
             if (ansLine) {
                 const letter = ansLine[1].toUpperCase();
                 answerHint = 'ABCD1234'.indexOf(letter) % 4;
+                // If we found an answer hint, we can stop looking in this block
                 continue;
             }
 
-            // Inline options like "A) Paris  B) London  C) Berlin  D) Rome"
-            const inlineMatches = [...line.matchAll(/\b([A-Da-d])\s*[.)]\s*([^A-Da-d]*?)(?=\s+[A-Da-d]\s*[.)]|$)/g)];
+            // Inline options like "(A) Paris (B) London" or "A. Paris  B. London"
+            const inlineMatches = [...line.matchAll(/(?:\(?\s*([A-Da-d])\s*[.)]\s*)([^A-Da-d]*?)(?=\s+(?:\(?\s*[A-Da-d])\s*[.)]|$)/g)];
             if (inlineMatches.length >= 2) {
                 for (const m of inlineMatches) {
                     let optText = m[2].trim();

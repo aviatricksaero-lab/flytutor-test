@@ -153,15 +153,15 @@ app.post('/api/assessments', auth, adminAuth, async (req, res) => {
 app.post('/api/assessments/submit', auth, async (req, res) => {
   const { assessmentId, answers } = req.body;
 
-  // Time Restriction: 11 AM to 12 PM IST
+  // Time Restriction: 04 PM to 05 PM IST
   const now = new Date();
   const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
   const hours = istTime.getHours();
 
-  if (hours < 11 || hours >= 12) {
-    console.log(`🚫 Submission rejected: Time is ${istTime.toLocaleTimeString()} IST (Hours: ${hours})`);
+  if (hours < 16 || hours >= 17) {
+    console.log(`🚫 Submission rejected: Assessment submission is only allowed between 04:00 PM and 05:00 PM IST. Current time: ${istTime.toLocaleTimeString()} IST (Hours: ${hours})`);
     return res.status(403).json({
-      message: 'Assessment submission is only allowed between 11:00 AM and 12:00 PM IST.'
+      message: 'Assessment submission is only allowed between 04:00 PM and 05:00 PM IST.'
     });
   }
 
@@ -170,24 +170,42 @@ app.post('/api/assessments/submit', auth, async (req, res) => {
     const assessment = await Assessment.findById(assessmentId);
     if (!assessment) return res.status(404).json({ message: 'Not found' });
 
+    // Prevent duplicate submission
+    const existing = await Submission.findOne({ assessment: assessmentId, student: req.user._id });
+    if (existing) {
+      console.log(`⚠️ Blocked duplicate submission attempt from ${req.user.email}`);
+      return res.status(400).json({ message: 'Assessment already submitted' });
+    }
+
+    // Handle both array and object format for answers
     let score = 0;
+    const answersArray = [];
+
     assessment.questions.forEach((q, idx) => {
+      const studentChoice = answers[idx];
       const correctIdx = q.correctAnswer;
-      if (answers[idx] === correctIdx) score++;
+
+      // Store in array for DB
+      answersArray[idx] = (studentChoice !== undefined && studentChoice !== null) ? Number(studentChoice) : -1;
+
+      // Calculate score
+      if (studentChoice === correctIdx) score++;
     });
 
     const submission = new Submission({
       assessment: assessmentId,
       student: req.user._id,
-      answers,
+      answers: answersArray,
       score,
       isGraded: true
     });
 
     await submission.save();
+    console.log(`✅ Submission saved for ${req.user.email}. Score: ${score}`);
     res.status(201).json(submission);
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    console.error('❌ Submission save error:', e);
+    res.status(400).json({ message: e.message });
   }
 });
 
