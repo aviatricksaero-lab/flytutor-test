@@ -17,22 +17,23 @@ const HomePage = ({ user }) => {
 
         const timer = setInterval(() => {
             const now = new Date();
-            const hrs = now.getHours();
+            const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+            const hrs = istTime.getHours();
 
-            if (hrs >= 10 && hrs < 11) {
+            if (hrs >= 11 && hrs < 12) {
                 setIsExamWindow(true);
                 setCountdown("EXAM IS LIVE NOW! 🎯");
             } else {
                 setIsExamWindow(false);
-                let target = new Date();
-                if (hrs >= 11) target.setDate(target.getDate() + 1);
-                target.setHours(10, 0, 0, 0);
+                let target = new Date(istTime);
+                if (hrs >= 12) target.setDate(target.getDate() + 1);
+                target.setHours(11, 0, 0, 0);
 
-                const diff = target - now;
+                const diff = target - istTime;
                 const h = Math.floor(diff / (1000 * 60 * 60));
                 const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                 const s = Math.floor((diff % (1000 * 60)) / 1000);
-                setCountdown(`${h}h ${m}m ${s}s until 10:00 AM Exam`);
+                setCountdown(`${h}h ${m}m ${s}s until 11:00 AM Exam`);
             }
         }, 1000);
 
@@ -115,19 +116,33 @@ const HomePage = ({ user }) => {
                                     <button
                                         className="button-primary"
                                         style={{ flex: 1, width: '100%', fontSize: '0.85rem', opacity: 0.5, cursor: 'not-allowed', background: '#ccc' }}
-                                        onClick={() => alert("Exams can only be started between 10:00 AM and 11:00 AM.")}
+                                        onClick={() => alert("Exams can only be started between 11:00 AM and 12:00 PM.")}
                                     >
                                         Locked
                                     </button>
                                 )
                             ) : (
-                                <button
-                                    className="button-primary"
-                                    style={{ flex: 1, fontSize: '0.85rem', background: 'rgba(0,0,0,0.05)', color: '#1f2937', border: '1px solid rgba(0,0,0,0.1)' }}
-                                    onClick={() => alert(`Your Score: ${item.mySubmission.score} / ${item.questions.length}`)}
-                                >
-                                    View Score
-                                </button>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <div style={{
+                                        background: 'rgba(16,185,129,0.1)',
+                                        color: '#047857',
+                                        padding: '12px',
+                                        borderRadius: '12px',
+                                        textAlign: 'center',
+                                        fontWeight: 'bold',
+                                        fontSize: '1rem',
+                                        border: '1px solid rgba(16,185,129,0.2)'
+                                    }}>
+                                        Score: {item.mySubmission.score} / {item.questions.length}
+                                    </div>
+                                    <button
+                                        className="button-primary"
+                                        style={{ width: '100%', fontSize: '0.85rem', background: 'rgba(0,0,0,0.05)', color: '#1f2937', border: '1px solid rgba(0,0,0,0.1)' }}
+                                        onClick={() => alert(`Registration confirmed. Score: ${item.mySubmission.score} / ${item.questions.length}`)}
+                                    >
+                                        Detailed Review
+                                    </button>
+                                </div>
                             )}
                             {item.pdfUrl && (
                                 <button

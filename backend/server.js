@@ -106,6 +106,7 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ message: 'Email and password are required' });
     const normalizedEmail = email.toLowerCase().trim();
     const user = await User.findOne({ email: normalizedEmail });
     if (!user || !(await user.comparePassword(password))) {
@@ -114,7 +115,7 @@ app.post('/api/auth/login', async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
     res.json({ user, token });
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    res.status(400).json({ message: e.message });
   }
 });
 
@@ -152,16 +153,20 @@ app.post('/api/assessments', auth, adminAuth, async (req, res) => {
 app.post('/api/assessments/submit', auth, async (req, res) => {
   const { assessmentId, answers } = req.body;
 
-  // Time Restriction: 10 AM to 11 AM only
+  // Time Restriction: 11 AM to 12 PM IST
   const now = new Date();
-  const hours = now.getHours();
+  const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const hours = istTime.getHours();
+
   if (hours < 11 || hours >= 12) {
+    console.log(`🚫 Submission rejected: Time is ${istTime.toLocaleTimeString()} IST (Hours: ${hours})`);
     return res.status(403).json({
-      message: 'Assessment submission is only allowed between 10:00 AM and 11:00 AM IST.'
+      message: 'Assessment submission is only allowed between 11:00 AM and 12:00 PM IST.'
     });
   }
 
   try {
+    console.log(`📩 Submission received for assessment ${assessmentId} from user ${req.user.email}`);
     const assessment = await Assessment.findById(assessmentId);
     if (!assessment) return res.status(404).json({ message: 'Not found' });
 

@@ -328,6 +328,7 @@ const AdminDashboard = () => {
                                         <th style={{ padding: '16px' }}>Name</th>
                                         <th style={{ padding: '16px' }}>Email</th>
                                         <th style={{ padding: '16px' }}>Role</th>
+                                        <th style={{ padding: '16px' }}>Latest Score</th>
                                         <th style={{ padding: '16px' }}>Desired Mark</th>
                                         <th style={{ padding: '16px', textAlign: 'right' }}>Actions</th>
                                     </tr>
@@ -339,6 +340,14 @@ const AdminDashboard = () => {
                                             <td style={{ padding: '16px', opacity: 0.7 }}>{u.email}</td>
                                             <td style={{ padding: '16px' }}>
                                                 <span style={{ fontSize: '0.75rem', padding: '4px 8px', background: 'rgba(236,72,153,0.1)', color: '#ec4899', borderRadius: '4px' }}>{u.role}</span>
+                                            </td>
+                                            <td style={{ padding: '16px', fontWeight: 'bold' }}>
+                                                {(() => {
+                                                    const userSubmissions = reports.filter(r => r.student?._id === u._id);
+                                                    if (userSubmissions.length === 0) return <span style={{ opacity: 0.3 }}>-</span>;
+                                                    const latest = userSubmissions[0];
+                                                    return <span style={{ color: '#10b981' }}>{latest.score} / {latest.assessment?.questions?.length}</span>;
+                                                })()}
                                             </td>
                                             <td style={{ padding: '16px', opacity: 0.7 }}>
                                                 {u.desiredMark ? (
