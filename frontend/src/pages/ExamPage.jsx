@@ -4,6 +4,22 @@ import axios from 'axios';
 import { AlertTriangle, ShieldCheck, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Seeded random shuffle helper
+const seededShuffle = (array, seed) => {
+    let m = array.length, t, i;
+    // Simple numeric seed from string
+    let seedNum = 0;
+    for (let char of (seed || "default")) seedNum += char.charCodeAt(0);
+    
+    while (m) {
+        i = Math.floor((Math.abs(Math.sin(seedNum++)) * m--));
+        t = array[m];
+        array[m] = array[i];
+        array[i] = t;
+    }
+    return array;
+};
+
 const ExamPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -12,7 +28,12 @@ const ExamPage = () => {
     const [answers, setAnswers] = useState({});
     const [timeLeft, setTimeLeft] = useState(0);
     const [isFinished, setIsFinished] = useState(false);
-    const [timeError, setTimeError] = useState(false);
+    const [shuffledQuestions, setShuffledQuestions] = useState([]);
+    const [showProjectForm, setShowProjectForm] = useState(false);
+    const [mcqSubmitted, setMcqSubmitted] = useState(false);
+    const [projects, setProjects] = useState([{ title: '', description: '' }]);
+    const [resumeFile, setResumeFile] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     // High Secure Variables
     const [warnings, setWarnings] = useState(0);
@@ -32,13 +53,7 @@ const ExamPage = () => {
     // Fetch Assessment
     useEffect(() => {
         const now = new Date();
-        const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-        const hrs = istTime.getHours();
-        const mins = istTime.getMinutes();
-        if (hrs < 16 || hrs > 17 || (hrs === 17 && mins >= 30)) {
-            setTimeError(true);
-        }
-
+        
         axios.get('/api/assessments').then(res => {
             const selected = res.data.find(t => t._id === id);
 
@@ -53,44 +68,95 @@ const ExamPage = () => {
                 return;
             }
 
+            // Add original index and perform a seeded shuffle based on the user ID
+            // (Assumes user ID is available or use a fallback)
+            const userId = localStorage.getItem('userId') || 'guest';
+            const indexedQuestions = selected.questions.map((q, idx) => ({ ...q, originalIndex: idx }));
+            const shuffled = seededShuffle([...indexedQuestions], userId);
+            
+            setShuffledQuestions(shuffled);
             setTest(selected);
-
-            const testDurationSeconds = (selected.duration || 30) * 60;
-            const endWindow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-            endWindow.setHours(17, 30, 0, 0);
-            const secondsUntil530pm = Math.floor((endWindow - new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))) / 1000);
-
-            // Set whichever is shorter
-            setTimeLeft(Math.max(0, Math.min(testDurationSeconds, secondsUntil530pm)));
+            setTimeLeft((selected.duration || 30) * 60);
         });
     }, [id]);
 
     const handleSubmit = async (forced = false) => {
         if (isFinishedRef.current) return;
-        setIsFinished(true);
-        isFinishedRef.current = true;
+
+        // Map shuffled answers back to original indices
+        const originalAnswers = {};
+        Object.keys(answers).forEach(shuffledIdx => {
+            const originalIdx = shuffledQuestions[shuffledIdx].originalIndex;
+            originalAnswers[originalIdx] = answers[shuffledIdx];
+        });
+
+        // If forced (Time/Security), submit everything at once as before
+        if (forced) {
+            setIsFinished(true);
+            isFinishedRef.current = true;
+            try {
+                await axios.post('/api/assessments/submit', {
+                    assessmentId: id,
+                    answers: originalAnswers,
+                    projects: [{ title: "N/A (Forced)", description: "N/A (Forced)" }]
+                });
+                alert(forced === "TIME" ? "🚨 TIME EXPIRED: Your exam was automatically submitted." : "🚨 EXAM TERMINATED: Too many security violations.");
+                navigate('/');
+            } catch (err) {
+                navigate('/');
+            }
+            return;
+        }
+
+        // Normal Flow: Submit MCQs first
         try {
             await axios.post('/api/assessments/submit', {
                 assessmentId: id,
-                answers: answersRef.current // Send the object directly, backend handles indices
+                answers: originalAnswers
             });
-            if (forced === "TIME") {
-                alert("🚨 TIME EXPIRED: The 05:30 PM deadline has been reached. Your exam was automatically submitted.");
-            } else if (forced) {
-                alert("🚨 EXAM TERMINATED: Too many security violations.");
-            } else {
-                alert("✅ Exam submitted successfully.");
+            setMcqSubmitted(true);
+            setShowProjectForm(true);
+            // We DON'T set isFinished=true yet because we want them to fill the project form
+            // But we will stop the timer by checking mcqSubmitted in the useEffect
+        } catch (err) {
+            alert("Submission failed. Please check your internet and try again.");
+        }
+    };
+
+    const handleProjectSubmit = async () => {
+        setIsUploading(true);
+        try {
+            // 1. Upload Resume if exists
+            if (resumeFile) {
+                const formData = new FormData();
+                formData.append('resume', resumeFile);
+                formData.append('assessmentId', id);
+                await axios.post('/api/assessments/upload-resume', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
             }
+
+            // 2. Update Projects
+            await axios.post('/api/assessments/update-project', {
+                assessmentId: id,
+                projects: projects
+            });
+            
+            setIsFinished(true);
+            isFinishedRef.current = true;
+            alert("✅ Assessment completed successfully! Your resume and project details have been recorded.");
             navigate('/');
         } catch (err) {
-            alert("Submission failed.");
-            navigate('/');
+            console.error(err);
+            alert("Failed to complete submission. Please check your file size and internet.");
+        } finally {
+            setIsUploading(false);
         }
     };
 
     // --- HIGH SECURITY MONITORING ---
     useEffect(() => {
-        if (!test || isFinished) return;
+        if (!test || isFinished || mcqSubmitted) return;
 
         // 1. Prevent back button
         window.history.pushState(null, null, window.location.pathname);
@@ -178,26 +244,21 @@ const ExamPage = () => {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
         };
-    }, [test, isFinished]);
+    }, [test, isFinished, mcqSubmitted]);
 
     // Timer logic
     useEffect(() => {
-        if (timeLeft <= 0 && test) {
-            if (!isFinished) handleSubmit("TIME");
+        if (!test || isFinished || mcqSubmitted) return;
+
+        if (timeLeft <= 0) {
+            handleSubmit("TIME");
             return;
         }
         const timer = setInterval(() => {
-            // Hard check for 05:30 PM IST
-            const now = new Date();
-            const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-            if (istTime.getHours() > 17 || (istTime.getHours() === 17 && istTime.getMinutes() >= 30)) {
-                if (!isFinished) handleSubmit("TIME");
-                return;
-            }
             setTimeLeft(prev => prev - 1);
         }, 1000);
         return () => clearInterval(timer);
-    }, [timeLeft, test, isFinished]);
+    }, [timeLeft, test, isFinished, mcqSubmitted]);
 
     const triggerWarning = (reason) => {
         if (isFinishedRef.current) return;
@@ -222,37 +283,12 @@ const ExamPage = () => {
 
     if (!test) return <div className="container">Loading Exam...</div>;
 
-    if (timeError) {
-        return (
-            <div className="auth-page-wrapper">
-                <div className="sticker sticker-1">🦋</div>
-                <div className="sticker sticker-2">🍀</div>
-                <div className="sticker sticker-3">🌟</div>
-                <div className="sticker sticker-4">💖</div>
-                <div className="container" style={{ maxWidth: '600px', textAlign: 'center', zIndex: 2 }}>
-                    <div className="glass" style={{ padding: '40px' }}>
-                        <Clock size={64} color="#ef4444" style={{ marginBottom: '24px' }} />
-                        <h2 style={{ marginBottom: '16px' }}>Access Restricted</h2>
-                        <p style={{ marginBottom: '32px', opacity: 0.8 }}>This exam is only available between **04:00 PM** and **05:30 PM** IST.</p>
-                        <button className="button-primary full-width" onClick={() => navigate('/')}>
-                            Return to Dashboard
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     if (!isFullscreen) {
         return (
             <div className="auth-page-wrapper">
-                <div className="sticker sticker-1">🦋</div>
-                <div className="sticker sticker-2">🍀</div>
-                <div className="sticker sticker-3">🌟</div>
-                <div className="sticker sticker-4">💖</div>
                 <div className="container" style={{ maxWidth: '600px', marginTop: '0', textAlign: 'center', zIndex: 2 }}>
                     <div className="glass" style={{ padding: '40px' }}>
-                        <ShieldCheck size={64} color="#ec4899" style={{ marginBottom: '24px' }} />
+                        <ShieldCheck size={64} color="#3b82f6" style={{ marginBottom: '24px' }} />
                         <h2 style={{ marginBottom: '16px' }}>High-Security Exam Protocol</h2>
                         <ul style={{ textAlign: 'left', marginBottom: '32px', opacity: 0.8, lineHeight: '1.8' }}>
                             <li>Do <strong>not</strong> switch tabs or minimize the browser.</li>
@@ -270,8 +306,10 @@ const ExamPage = () => {
         );
     }
 
-    const q = test.questions[currentQuestion];
+    const q = shuffledQuestions[currentQuestion];
     const formatTime = (s) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+
+    if (!q) return <div className="container">Preparing questions...</div>;
 
     return (
         <div className="container" style={{ maxWidth: '800px', margin: '0 auto', userSelect: 'none' }}>
@@ -316,55 +354,153 @@ const ExamPage = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px', alignItems: 'center' }}>
                         <div>
                             <h1 style={{ fontSize: '1.5rem', marginBottom: '4px' }}>{test.title}</h1>
-                            <p style={{ opacity: 0.5, margin: 0 }}>Question {currentQuestion + 1} of {test.questions.length}</p>
+                            {!mcqSubmitted ? (
+                                <p style={{ opacity: 0.5, margin: 0 }}>Question {currentQuestion + 1} of {test.questions.length}</p>
+                            ) : (
+                                <p style={{ color: '#10b981', margin: 0, fontWeight: 'bold' }}>MCQs Submitted ✅</p>
+                            )}
                         </div>
                         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                            {warnings > 0 && (
+                            {warnings > 0 && !mcqSubmitted && (
                                 <div style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '0.85rem', background: 'rgba(239,68,68,0.1)', padding: '6px 12px', borderRadius: '20px' }}>
                                     ⚠️ {warnings} / {MAX_WARNINGS} Warnings
                                 </div>
                             )}
-                            <div className="timer-pill" style={{ background: timeLeft < 300 ? 'rgba(239,68,68,0.2)' : 'rgba(236,72,153,0.2)', color: timeLeft < 300 ? '#ef4444' : '#ec4899' }}>
-                                Time Left: {formatTime(timeLeft)}
-                            </div>
+                            {!mcqSubmitted && (
+                                <div className="timer-pill" style={{ background: timeLeft < 300 ? 'rgba(239,68,68,0.2)' : 'rgba(59,130,246,0.2)', color: timeLeft < 300 ? '#ef4444' : '#3b82f6' }}>
+                                    Time Left: {formatTime(timeLeft)}
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     <div className="question-box">
-                        <h2 style={{ fontSize: '1.2rem', marginBottom: '32px', lineHeight: '1.5' }}>{currentQuestion + 1}. {q.text}</h2>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {q.options.map((opt, idx) => (
-                                <button
-                                    key={idx}
-                                    className={`option-button ${answers[currentQuestion] === idx ? 'selected' : ''}`}
-                                    onClick={() => setAnswers({ ...answers, [currentQuestion]: idx })}
+                        {showProjectForm ? (
+                            <div className="glass" style={{ padding: '24px', border: '1px solid rgba(59,130,246,0.3)', maxHeight: '500px', overflowY: 'auto' }}>
+                                <h3 style={{ marginBottom: '16px', color: '#3b82f6' }}>Final Step: Project Details</h3>
+                                <p style={{ fontSize: '0.85rem', opacity: 0.7, marginBottom: '24px' }}>
+                                    Please mention projects you have worked on. You can add multiple projects.
+                                </p>
+
+                                {projects.map((proj, index) => (
+                                    <div key={index} style={{ marginBottom: '32px', paddingBottom: '24px', borderBottom: index < projects.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                            <h4 style={{ margin: 0, fontSize: '0.9rem', opacity: 0.8 }}>Project #{index + 1}</h4>
+                                            {projects.length > 1 && (
+                                                <button 
+                                                    onClick={() => setProjects(projects.filter((_, i) => i !== index))}
+                                                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem' }}
+                                                >
+                                                    Remove
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="auth-form-group">
+                                            <label className="auth-label">Project Title</label>
+                                            <input 
+                                                type="text" 
+                                                className="auth-input" 
+                                                placeholder="Enter project name"
+                                                value={proj.title}
+                                                onChange={e => {
+                                                    const newProjects = [...projects];
+                                                    newProjects[index].title = e.target.value;
+                                                    setProjects(newProjects);
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="auth-form-group">
+                                            <label className="auth-label">Project Description</label>
+                                            <textarea 
+                                                className="auth-input" 
+                                                rows="3" 
+                                                placeholder="Describe your role and the technology used..."
+                                                style={{ resize: 'none', padding: '12px' }}
+                                                value={proj.description}
+                                                onChange={e => {
+                                                    const newProjects = [...projects];
+                                                    newProjects[index].description = e.target.value;
+                                                    setProjects(newProjects);
+                                                }}
+                                            ></textarea>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                <button 
+                                    onClick={() => setProjects([...projects, { title: '', description: '' }])}
+                                    style={{ background: 'none', border: '1px dashed #3b82f6', color: '#3b82f6', padding: '12px', borderRadius: '8px', width: '100%', cursor: 'pointer', marginBottom: '32px' }}
                                 >
-                                    <span style={{ fontWeight: 'bold', marginRight: '16px', opacity: 0.5 }}>{String.fromCharCode(65 + idx)}.</span>
-                                    {opt}
+                                    + Add Another Project
                                 </button>
-                            ))}
-                        </div>
+
+                                <div className="glass" style={{ padding: '20px', background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.1)' }}>
+                                    <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem' }}>Upload Your Resume (PDF)</h4>
+                                    <input 
+                                        type="file" 
+                                        accept=".pdf"
+                                        onChange={e => setResumeFile(e.target.files[0])}
+                                        style={{ fontSize: '0.85rem' }}
+                                    />
+                                    {resumeFile && (
+                                        <p style={{ margin: '8px 0 0 0', fontSize: '0.75rem', color: '#10b981' }}>
+                                            Selected: {resumeFile.name} ({(resumeFile.size / 1024).toFixed(1)} KB)
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <h2 style={{ fontSize: '1.2rem', marginBottom: '32px', lineHeight: '1.5' }}>{currentQuestion + 1}. {q.text}</h2>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    {q.options.map((opt, idx) => (
+                                        <button
+                                            key={idx}
+                                            className={`option-button ${answers[currentQuestion] === idx ? 'selected' : ''}`}
+                                            onClick={() => setAnswers({ ...answers, [currentQuestion]: idx })}
+                                        >
+                                            <span style={{ fontWeight: 'bold', marginRight: '16px', opacity: 0.5 }}>{String.fromCharCode(65 + idx)}.</span>
+                                            {opt}
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '40px' }}>
-                        {currentQuestion === test.questions.length - 1 ? (
+                        {showProjectForm ? (
                             <button
                                 className="button-primary"
-                                style={{ background: answers[currentQuestion] !== undefined ? '#10b981' : '#4b5563', cursor: answers[currentQuestion] !== undefined ? 'pointer' : 'not-allowed' }}
-                                onClick={() => handleSubmit(false)}
-                                disabled={answers[currentQuestion] === undefined}
+                                style={{ 
+                                    background: (projects.every(p => p.title && p.description) && !isUploading) ? '#10b981' : '#4b5563',
+                                    display: 'flex', alignItems: 'center', gap: '8px'
+                                }}
+                                onClick={handleProjectSubmit}
+                                disabled={!projects.every(p => p.title && p.description) || isUploading}
                             >
-                                Finish Exam
+                                {isUploading ? 'Uploading...' : 'Save & Submit Application'}
                             </button>
                         ) : (
-                            <button
-                                className="button-primary"
-                                onClick={() => setCurrentQuestion(prev => prev + 1)}
-                                style={{ background: answers[currentQuestion] !== undefined ? '#ec4899' : '#4b5563', cursor: answers[currentQuestion] !== undefined ? 'pointer' : 'not-allowed' }}
-                                disabled={answers[currentQuestion] === undefined}
-                            >
-                                Next Question
-                            </button>
+                            currentQuestion === shuffledQuestions.length - 1 ? (
+                                <button
+                                    className="button-primary"
+                                    style={{ background: answers[currentQuestion] !== undefined ? '#3b82f6' : '#4b5563', cursor: answers[currentQuestion] !== undefined ? 'pointer' : 'not-allowed' }}
+                                    onClick={() => handleSubmit(false)}
+                                    disabled={answers[currentQuestion] === undefined}
+                                >
+                                    Proceed to Project Details
+                                </button>
+                            ) : (
+                                <button
+                                    className="button-primary"
+                                    onClick={() => setCurrentQuestion(prev => prev + 1)}
+                                    style={{ background: answers[currentQuestion] !== undefined ? '#3b82f6' : '#4b5563', cursor: answers[currentQuestion] !== undefined ? 'pointer' : 'not-allowed' }}
+                                    disabled={answers[currentQuestion] === undefined}
+                                >
+                                    Next Question
+                                </button>
+                            )
                         )}
                     </div>
                 </div>

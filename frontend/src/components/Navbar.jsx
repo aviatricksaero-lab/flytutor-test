@@ -1,14 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
-import logo from '../assets/logo.png';
+import logo from '../assets/aviatricks_logo.svg';
 
 const Navbar = ({ user, handleLogout }) => (
     <nav>
         <div className="nav-brand">
             <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <img src={logo} alt="FlyTutor Logo" style={{ height: '40px' }} />
-                <h2 className="nav-title" style={{ color: '#1f2937' }}>Flytutor</h2>
+                <img src={logo} alt="Aviatricks Logo" style={{ height: '40px' }} />
+                <h2 className="nav-title" style={{ color: '#1f2937' }}></h2>
             </Link>
         </div>
 

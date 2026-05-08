@@ -16,17 +16,32 @@ import { extractQuestions } from './utils/extractQuestions.js';
 import { extractAnswerKey } from './utils/extractAnswerKey.js';
 
 dotenv.config();
-connectDB();
+const app = express();
+const PORT = process.env.PORT || 8080;
+
+// --- START SERVER FIRST (Cloud Run Health Check) ---
+app.listen(PORT, () => {
+    console.log(`🚀 Flytutor Server running on port ${PORT}`);
+    // Connect to DB after starting listener
+    connectDB();
+});
 
 // --- FIREBASE ADMIN INIT ---
 let bucket = null;
 try {
   if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_PROJECT_ID) {
+    let privateKey = process.env.FIREBASE_PRIVATE_KEY || '';
+    if (privateKey && !privateKey.includes('-----BEGIN')) {
+      // Assume Base64 if it doesn't look like a PEM key
+      privateKey = Buffer.from(privateKey, 'base64').toString('utf8');
+    }
+    privateKey = privateKey.replace(/\\n/g, '\n');
+
     admin.initializeApp({
       credential: admin.credential.cert({
         projectId: process.env.FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        privateKey: privateKey,
       }),
       storageBucket: process.env.FIREBASE_STORAGE_BUCKET
     });
@@ -39,12 +54,15 @@ try {
   console.error('❌ Firebase init error:', e.message);
 }
 
-const app = express();
-const PORT = process.env.PORT || 5000;
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
 
-app.use(cors());
+app.use(cors({
+  origin: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  credentials: true
+}));
 app.use(express.json());
 app.use('/uploads', express.static(UPLOAD_DIR));
 
@@ -80,7 +98,7 @@ const adminAuth = (req, res, next) => {
 // and we trust it, or verify the ID token here.
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { name, email, password, role, phone, desiredMark } = req.body;
+    const { name, email, password, role, phone, desiredMark, college, department, year } = req.body;
 
     // Check if email exists
     const normalizedEmail = email.toLowerCase().trim();
@@ -94,7 +112,7 @@ app.post('/api/auth/register', async (req, res) => {
       if (phoneExists) return res.status(400).json({ message: 'Phone number already registered' });
     }
 
-    const user = new User({ name, email: normalizedEmail, password, role, phone: phone?.trim(), desiredMark });
+    const user = new User({ name, email: normalizedEmail, password, role, phone: phone?.trim(), desiredMark, college, department, year });
     await user.save();
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
     res.status(201).json({ user, token });
@@ -106,6 +124,7 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log('🔑 Login attempt for:', email);
     if (!email || !password) return res.status(400).json({ message: 'Email and password are required' });
     const normalizedEmail = email.toLowerCase().trim();
     const user = await User.findOne({ email: normalizedEmail });
@@ -115,6 +134,7 @@ app.post('/api/auth/login', async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
     res.json({ user, token });
   } catch (e) {
+    console.error('❌ Login error:', e);
     res.status(400).json({ message: e.message });
   }
 });
@@ -151,20 +171,7 @@ app.post('/api/assessments', auth, adminAuth, async (req, res) => {
 });
 
 app.post('/api/assessments/submit', auth, async (req, res) => {
-  const { assessmentId, answers } = req.body;
-
-  // Time Restriction: 04 PM to 05:30 PM IST
-  const now = new Date();
-  const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-  const hours = istTime.getHours();
-  const minutes = istTime.getMinutes();
-
-  if (hours < 16 || hours > 17 || (hours === 17 && minutes >= 30)) {
-    console.log(`🚫 Submission rejected: Assessment submission is only allowed between 04:00 PM and 05:30 PM IST. Current time: ${istTime.toLocaleTimeString()} IST (Hours: ${hours}, Minutes: ${minutes})`);
-    return res.status(403).json({
-      message: 'Assessment submission is only allowed between 04:00 PM and 05:30 PM IST.'
-    });
-  }
+  const { assessmentId, answers, projects } = req.body;
 
   try {
     console.log(`📩 Submission received for assessment ${assessmentId} from user ${req.user.email}`);
@@ -198,7 +205,8 @@ app.post('/api/assessments/submit', auth, async (req, res) => {
       student: req.user._id,
       answers: answersArray,
       score,
-      isGraded: true
+      isGraded: true,
+      projects: projects || []
     });
 
     await submission.save();
@@ -210,7 +218,45 @@ app.post('/api/assessments/submit', auth, async (req, res) => {
   }
 });
 
+app.post('/api/assessments/update-project', auth, async (req, res) => {
+  const { assessmentId, projects } = req.body;
+  try {
+    const submission = await Submission.findOneAndUpdate(
+      { assessment: assessmentId, student: req.user._id },
+      { projects },
+      { new: true }
+    );
+    if (!submission) return res.status(404).json({ message: 'Submission not found' });
+    res.json(submission);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
 // --- ADMIN / TRAINER ROUTES ---
+
+app.post('/api/assessments/upload-resume', auth, upload.single('resume'), async (req, res) => {
+  try {
+    const { assessmentId } = req.body;
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    if (!bucket) return res.status(500).json({ error: 'Storage not configured' });
+
+    const fileName = `resumes/${req.user._id}-${Date.now()}-${req.file.originalname}`;
+    const fileRef = bucket.file(fileName);
+    await fileRef.save(req.file.buffer, { metadata: { contentType: req.file.mimetype } });
+    await fileRef.makePublic();
+    const resumeUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+
+    await Submission.findOneAndUpdate(
+      { assessment: assessmentId, student: req.user._id },
+      { resumeUrl }
+    );
+
+    res.json({ resumeUrl });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
 
 app.post('/api/admin/tests/create', auth, adminAuth, upload.fields([
   { name: 'pdfFile', maxCount: 1 },
@@ -269,6 +315,8 @@ app.post('/api/admin/tests/create', auth, adminAuth, upload.fields([
     const assessment = new Assessment({
       title,
       duration: parseInt(duration) || 30,
+      scheduledDate: req.body.scheduledDate,
+      scheduledTime: req.body.scheduledTime,
       trainer: req.user._id,
       questions,
       pdfUrl
@@ -372,4 +420,3 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal Server Error', message: err.message });
 });
 
-app.listen(PORT, () => console.log(`🚀 Flytutor Server running on port ${PORT}`));

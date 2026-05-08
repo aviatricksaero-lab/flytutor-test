@@ -16,6 +16,7 @@ const LoginPage = ({ setUser }) => {
             const { data } = await axios.post('/api/auth/login', formData);
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('userId', data.user._id);
             setUser(data.user);
             navigate('/');
         } catch (err) {
@@ -25,15 +26,8 @@ const LoginPage = ({ setUser }) => {
 
     return (
         <div className="auth-page-wrapper">
-            <div className="sticker sticker-1">🌸</div>
-            <div className="sticker sticker-2">🎀</div>
-            <div className="sticker sticker-3">💐</div>
-            <div className="sticker sticker-4">💖</div>
-            <div className="sticker sticker-5">✨</div>
-            <div className="sticker sticker-6">🌷</div>
-
             <div className="auth-container">
-                <h1 className="scholarship-hero">Women's Day Scholarship Exam</h1>
+                <h1 className="scholarship-hero">Interview Portal</h1>
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass auth-page" style={{ width: '100%', maxWidth: '400px' }}>
                     <h2 style={{ textAlign: 'center', marginBottom: '32px' }}>Login</h2>
                     <form onSubmit={handleSubmit}>

@@ -16,6 +16,8 @@ const AdminDashboard = () => {
     const [keyFileName, setKeyFileName] = useState('');
     const [title, setTitle] = useState('');
     const [duration, setDuration] = useState('30');
+    const [scheduledDate, setScheduledDate] = useState('');
+    const [scheduledTime, setScheduledTime] = useState('');
     const pdfRef = useRef();
     const keyRef = useRef();
 
@@ -50,6 +52,8 @@ const AdminDashboard = () => {
         const formData = new FormData();
         formData.append('title', title);
         formData.append('duration', duration);
+        formData.append('scheduledDate', scheduledDate);
+        formData.append('scheduledTime', scheduledTime);
         formData.append('pdfFile', pdfRef.current.files[0]);
         if (keyRef.current?.files[0]) {
             formData.append('answerKey', keyRef.current.files[0]);
@@ -64,6 +68,8 @@ const AdminDashboard = () => {
             setUploadStatus(`✅ Success! "${data.title}" created with ${data.questionsExtracted} questions.`);
             setTitle('');
             setDuration('30');
+            setScheduledDate('');
+            setScheduledTime('');
             setPdfFileName('');
             setKeyFileName('');
             if (pdfRef.current) pdfRef.current.value = '';
@@ -102,12 +108,7 @@ const AdminDashboard = () => {
 
     return (
         <div className="container" style={{ maxWidth: '1200px', position: 'relative' }}>
-            <div className="sticker sticker-1" style={{ position: 'fixed', left: '20px', top: '20%' }}>🌸</div>
-            <div className="sticker sticker-2" style={{ position: 'fixed', right: '20px', top: '15%' }}>✨</div>
-            <div className="sticker sticker-3" style={{ position: 'fixed', left: '30px', bottom: '10%' }}>💝</div>
-            <div className="sticker sticker-4" style={{ position: 'fixed', right: '30px', bottom: '15%' }}>🌺</div>
-            <div className="sticker sticker-5" style={{ position: 'fixed', left: '10px', top: '45%' }}>🌷</div>
-            <div className="sticker sticker-6" style={{ position: 'fixed', right: '15px', top: '55%' }}>🎀</div>
+
             <div style={{ display: 'flex', gap: '16px', marginBottom: '40px', flexWrap: 'wrap' }}>
                 {[
                     { key: 'upload', label: 'Create Exam', icon: <Upload size={18} /> },
@@ -121,7 +122,7 @@ const AdminDashboard = () => {
                         style={{
                             flex: 1,
                             background: tab === t.key
-                                ? 'linear-gradient(135deg, #ec4899, #d946ef)'
+                                ? 'linear-gradient(135deg, #3b82f6, #1e40af)'
                                 : 'rgba(0,0,0,0.05)',
                             color: tab === t.key ? '#fff' : '#1f2937',
                             border: '1px solid rgba(0,0,0,0.1)',
@@ -167,6 +168,27 @@ const AdminDashboard = () => {
                             </div>
                         </div>
 
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '32px' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', opacity: 0.7, fontSize: '0.85rem' }}>Scheduled Date</label>
+                                <input
+                                    type="date"
+                                    className="auth-input"
+                                    value={scheduledDate}
+                                    onChange={e => setScheduledDate(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', opacity: 0.7, fontSize: '0.85rem' }}>Scheduled Time</label>
+                                <input
+                                    type="time"
+                                    className="auth-input"
+                                    value={scheduledTime}
+                                    onChange={e => setScheduledTime(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
                         {/* PDF Upload */}
                         <div style={{ marginBottom: '32px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', opacity: 0.7, fontSize: '0.85rem' }}>Question Paper PDF *</label>
@@ -207,7 +229,7 @@ const AdminDashboard = () => {
                                     onChange={e => setPdfFileName(e.target.files[0]?.name || '')} />
                             </div>
 
-                            <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(236,72,153,0.05)', borderRadius: '12px', border: '1px solid rgba(236,72,153,0.2)' }}>
+                            <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(59,130,246,0.05)', borderRadius: '12px', border: '1px solid rgba(59,130,246,0.2)' }}>
                                 <p style={{ margin: 0, fontSize: '0.82rem', opacity: 0.7 }}>
                                     <strong>📋 Supported PDF Format:</strong><br />
                                     1. What is the capital of France?<br />
@@ -323,6 +345,7 @@ const AdminDashboard = () => {
                                     <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                                         <th style={{ padding: '16px' }}>Title</th>
                                         <th style={{ padding: '16px' }}>Questions</th>
+                                        <th style={{ padding: '16px' }}>Schedule</th>
                                         <th style={{ padding: '16px' }}>Duration</th>
                                         <th style={{ padding: '16px', textAlign: 'right' }}>Actions</th>
                                     </tr>
@@ -332,6 +355,13 @@ const AdminDashboard = () => {
                                         <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                                             <td style={{ padding: '16px' }}>{t.title}</td>
                                             <td style={{ padding: '16px', opacity: 0.7 }}>{t.questions?.length || 0}</td>
+                                            <td style={{ padding: '16px', fontSize: '0.85rem' }}>
+                                                {t.scheduledDate ? (
+                                                    <span style={{ color: '#3b82f6' }}>{new Date(t.scheduledDate).toLocaleDateString()} {t.scheduledTime}</span>
+                                                ) : (
+                                                    <span style={{ opacity: 0.3 }}>N/A</span>
+                                                )}
+                                            </td>
                                             <td style={{ padding: '16px', opacity: 0.7 }}>{t.duration} min</td>
                                             <td style={{ padding: '16px', textAlign: 'right' }}>
                                                 <button onClick={() => handleDeleteTest(t._id)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>Delete</button>
@@ -357,6 +387,9 @@ const AdminDashboard = () => {
                                         <th style={{ padding: '16px' }}>Name</th>
                                         <th style={{ padding: '16px' }}>Email</th>
                                         <th style={{ padding: '16px' }}>Role</th>
+                                        <th style={{ padding: '16px' }}>College</th>
+                                        <th style={{ padding: '16px' }}>Dept</th>
+                                        <th style={{ padding: '16px' }}>Year</th>
                                         <th style={{ padding: '16px' }}>Latest Score</th>
                                         <th style={{ padding: '16px' }}>Desired Mark</th>
                                         <th style={{ padding: '16px', textAlign: 'right' }}>Actions</th>
@@ -368,8 +401,11 @@ const AdminDashboard = () => {
                                             <td style={{ padding: '16px' }}>{u.name}</td>
                                             <td style={{ padding: '16px', opacity: 0.7 }}>{u.email}</td>
                                             <td style={{ padding: '16px' }}>
-                                                <span style={{ fontSize: '0.75rem', padding: '4px 8px', background: 'rgba(236,72,153,0.1)', color: '#ec4899', borderRadius: '4px' }}>{u.role}</span>
+                                                <span style={{ fontSize: '0.75rem', padding: '4px 8px', background: 'rgba(59,130,246,0.1)', color: '#3b82f6', borderRadius: '4px' }}>{u.role}</span>
                                             </td>
+                                            <td style={{ padding: '16px', opacity: 0.7, fontSize: '0.85rem' }}>{u.college || <span style={{ opacity: 0.3 }}>-</span>}</td>
+                                            <td style={{ padding: '16px', opacity: 0.7, fontSize: '0.85rem' }}>{u.department || <span style={{ opacity: 0.3 }}>-</span>}</td>
+                                            <td style={{ padding: '16px', opacity: 0.7, fontSize: '0.85rem' }}>{u.year || <span style={{ opacity: 0.3 }}>-</span>}</td>
                                             <td style={{ padding: '16px', fontWeight: 'bold' }}>
                                                 {(() => {
                                                     const userSubmissions = reports.filter(r => r.student?._id === u._id);
@@ -405,6 +441,39 @@ const AdminDashboard = () => {
                     <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="glass modal-content" onClick={e => e.stopPropagation()}>
                         <h2>{selectedSubmission.student?.name}'s Answer Review</h2>
                         <p style={{ opacity: 0.5, marginBottom: '24px' }}>{selectedSubmission.assessment?.title}</p>
+                        <div style={{ marginBottom: '24px', padding: '16px', background: 'rgba(59,130,246,0.05)', borderRadius: '12px', border: '1px solid rgba(59,130,246,0.1)', maxHeight: '200px', overflowY: 'auto' }}>
+                            <h4 style={{ color: '#3b82f6', marginBottom: '12px' }}>Projects Mentioned:</h4>
+                            {selectedSubmission.projects && selectedSubmission.projects.length > 0 ? (
+                                selectedSubmission.projects.map((p, i) => (
+                                    <div key={i} style={{ marginBottom: i < selectedSubmission.projects.length - 1 ? '16px' : 0 }}>
+                                        <p style={{ fontWeight: 'bold', margin: '0 0 4px 0', fontSize: '0.9rem' }}>#{i+1}: {p.title}</p>
+                                        <p style={{ fontSize: '0.85rem', opacity: 0.8, margin: 0 }}>{p.description}</p>
+                                    </div>
+                                ))
+                            ) : (selectedSubmission.projectTitle || selectedSubmission.projectDescription) ? (
+                                <div>
+                                    <p style={{ fontWeight: 'bold', margin: '0 0 4px 0', fontSize: '0.9rem' }}>{selectedSubmission.projectTitle || 'Legacy Project'}</p>
+                                    <p style={{ fontSize: '0.85rem', opacity: 0.8, margin: 0 }}>{selectedSubmission.projectDescription}</p>
+                                </div>
+                            ) : (
+                                <p style={{ opacity: 0.5, fontSize: '0.85rem' }}>No projects provided.</p>
+                            )}
+                        </div>
+
+                        {selectedSubmission.resumeUrl && (
+                            <div style={{ marginBottom: '24px' }}>
+                                <a 
+                                    href={selectedSubmission.resumeUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="button-primary"
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#3b82f6', textDecoration: 'none', width: 'auto', padding: '10px 20px' }}
+                                >
+                                    📄 View Student Resume
+                                </a>
+                            </div>
+                        )}
+
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {selectedSubmission.detailedAnswers?.map((ans, i) => (
                                 <div key={i} className="glass" style={{ padding: '16px 20px', borderLeft: `4px solid ${ans.isCorrect ? '#10b981' : '#ef4444'}` }}>

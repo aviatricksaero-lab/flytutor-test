@@ -10,6 +10,6 @@ RUN npm install --production
 COPY . .
 
 # Expose the port (Cloud Run uses the $PORT env var)
-EXPOSE 5000
+EXPOSE 8080
 
 CMD ["node", "server.js"]

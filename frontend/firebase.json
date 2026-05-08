@@ -1,7 +1,7 @@
 {
   "hosting": {
-    "site": "geoserver-101",
     "public": "dist",
+    "site": "geoserver-101",
     "ignore": [
       "firebase.json",
       "**/.*",

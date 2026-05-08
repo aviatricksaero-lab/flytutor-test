@@ -13,6 +13,8 @@ const assessmentSchema = new mongoose.Schema({
     trainer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     questions: [questionSchema],
     duration: { type: Number, default: 30 }, // Duration in minutes
+    scheduledDate: { type: String }, // Format: YYYY-MM-DD
+    scheduledTime: { type: String }, // Format: HH:mm
     isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 

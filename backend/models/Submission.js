@@ -6,6 +6,11 @@ const submissionSchema = new mongoose.Schema({
     answers: [Number], // Index of selected options
     score: { type: Number, default: 0 },
     isGraded: { type: Boolean, default: false },
+    projects: [{
+        title: { type: String },
+        description: { type: String }
+    }],
+    resumeUrl: { type: String }
 }, { timestamps: true });
 
 export default mongoose.model('Submission', submissionSchema);
